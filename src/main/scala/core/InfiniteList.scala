@@ -37,27 +37,32 @@ class InfiniteList[A <: ListItem] extends JScrollPane {
     val model = DefaultListModel[A]
     targetLengthQueue = new LinkedBlockingQueue[Int]()
     list.setModel(model)
+    setIntendedSelection(0)
     pullingThread = new Thread(() => pull(generator, model, targetLengthQueue))
     pullingThread.start()
     reachedBottom()
   }
 
-  private def pull(generator: Iterator[A], model: DefaultListModel[A], targetQueue: LinkedBlockingQueue[Int]): Unit =
-    try
-      while generator.hasNext do
+  private def pull(generator: Iterator[A], model: DefaultListModel[A], targetQueue: LinkedBlockingQueue[Int]): Unit = {
+    var count = 0
+    try {
+      while (generator.hasNext) {
         val targetLength = targetQueue.take()
-        while model.size() < targetLength && generator.hasNext do
+        println(s"Pulling till ${targetLength}")
+        while (count < targetLength && generator.hasNext) do
           val element = generator.next()
-//          println(s"Adding element $element (${model.size()}/$targetLength)")
+          println(s"Adding element $element (${model.size()}/$targetLength)")
+          count += 1
           invokeLater(() => appendElement(model, element))
-    catch
+      }
+    } catch
       case _: InterruptedException =>
+  }
 
   /** Must be called in "invokeLater" thread */
   private def appendElement(model: DefaultListModel[A], element: A): Unit = {
     model.addElement(element)
-    if model.size() == 1 then
-      list.setSelectedIndex(0)
+    setSelection(intendedSelection)
     SwingUtilities.invokeLater { () =>
       val bar = getVerticalScrollBar
       if bar.getMaximum == bar.getValue + bar.getVisibleAmount then
@@ -122,7 +127,7 @@ class InfiniteList[A <: ListItem] extends JScrollPane {
 
   /** Returns the `index`-th element of the list. */
   def apply(index: Int): A = list.getModel.getElementAt(index)
-  
+
   private def setSelection(index: Int): Unit = {
     if (index < 0)
       list.setSelectedIndex(0)
@@ -132,17 +137,19 @@ class InfiniteList[A <: ListItem] extends JScrollPane {
       list.setSelectedIndex(index)
     ensureSelectionVisible()
   }
-  
+
   /** Moves the selection up by one item.
-   * If we are on the top, nothing happens. */
+   * If we are on the top, nothing happens.
+   * (Will also adjust the intended selection.) */
   def selectNext(): Unit =
-    setSelection(selected + 1)
+    setIntendedSelection(selected + 1)
 
   /** Moves the selection down by one item.
-   * If we are on the bottom, nothing happens. */
+   * If we are on the bottom, nothing happens.
+   * (Will also adjust the intended selection.) */
   def selectPrevious(): Unit =
-    setSelection(selected - 1)
-    
+    setIntendedSelection(selected - 1)
+
   private def ensureSelectionVisible(): Unit =
     list.ensureIndexIsVisible(list.getSelectedIndex)
 }

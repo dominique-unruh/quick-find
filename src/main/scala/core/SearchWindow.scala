@@ -47,7 +47,7 @@ class SearchWindow(root: Folder) extends JFrame {
       updatePrefix()
       input.setText(sif.searchString)
       filter()
-      // Would like to restore the selection index sif.index, but for that we would need for the list to repopulate first
+      results.setIntendedSelection(sif.index)
     }
 
   private def updatePrefix(): Unit =
