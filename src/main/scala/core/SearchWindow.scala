@@ -1,4 +1,5 @@
 package de.unruh.quickfind
+package core
 
 import java.awt.event.KeyEvent
 import java.awt.{BorderLayout, KeyEventDispatcher, KeyboardFocusManager}
@@ -6,21 +7,30 @@ import javax.swing.event.{DocumentEvent, DocumentListener}
 import javax.swing.*
 import scala.collection.mutable
 
-
 class SearchWindow(root: Folder) extends JFrame {
   private val prefix = new JLabel()
   private val input = new JTextField()
-  private val results = new InfiniteList[PathListItem]
+  private val results = new InfiniteList[ItemPath](itemPathRenderer)
   private final case class SearchIndexFolder(searchString: String, index: Int, folder: Folder)
   private val searchStack = mutable.Stack[SearchIndexFolder]()
   initialize()
 
+  private object itemPathRenderer extends InfiniteList.Renderer[ItemPath] {
+    override def label(path: ItemPath): String = {
+      val string = path.map(_.text).mkString(s" ${Constants.separator} ")
+      if path.item.isInstanceOf[Folder] then
+        string + s" ${Constants.separator}"
+      else
+        string
+    }
+  }
+
   private def filter(): Unit = {
     val search = input.getText.toLowerCase
     val iterator =
-      for (path <- currentFolder.recursiveIterator;
+      for (path <- currentFolder.recursiveIterator
            if path.item.text.toLowerCase.indexOf(search) != -1)
-        yield PathListItem(path)
+        yield path
     results.setGenerator(iterator)
   }
 
@@ -28,20 +38,20 @@ class SearchWindow(root: Folder) extends JFrame {
 
   private def tabPressed(): Unit =
     val index = results.selected
-    val path = results(index).path
+    val path = results(index)
     path.item match
       case folder: Folder =>
         pushFolder(input.getText, index, folder)
       case item =>
 
-  private def pushFolder(searchString: String, index: Int, folder: Folder) =
+  private def pushFolder(searchString: String, index: Int, folder: Folder): Unit =
     val sif = SearchIndexFolder(searchString, index, folder)
     searchStack.push(sif)
     updatePrefix()
     input.setText("")
     filter()
 
-  private def popFolder() =
+  private def popFolder(): Unit =
     if (searchStack.nonEmpty) {
       val sif = searchStack.pop()
       updatePrefix()
@@ -72,8 +82,8 @@ class SearchWindow(root: Folder) extends JFrame {
   }
 
   private def enterPressed(): Unit =
-    val item = results.selectedItem
-    item.path.item.defaultAction()
+    val path = results.selectedItem
+    path.item.defaultAction()
     close()
 
   private def shiftTabPressed(): Unit =

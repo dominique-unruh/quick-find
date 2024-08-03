@@ -1,4 +1,5 @@
 package de.unruh.quickfind
+package core
 
 import java.io.{IOException, UncheckedIOException}
 import java.nio.file.{Files, Path}

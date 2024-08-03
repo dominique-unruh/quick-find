@@ -1,4 +1,5 @@
 package de.unruh.quickfind
+package core
 
 import java.awt.Component
 import java.awt.event.{AdjustmentEvent, AdjustmentListener}
@@ -6,10 +7,7 @@ import java.util.concurrent.LinkedBlockingQueue
 import javax.swing.SwingUtilities.invokeLater
 import javax.swing.{DefaultListCellRenderer, DefaultListModel, JLabel, JList, JScrollPane, ListCellRenderer, SwingUtilities}
 
-trait ListItem {
-  def listItemLabel: String
-}
-
+/*
 final class PathListItem(val path: ItemPath) extends ListItem:
   override def listItemLabel: String =
     val string = path.map(_.text).mkString(s" ${Constants.separator} ")
@@ -17,13 +15,14 @@ final class PathListItem(val path: ItemPath) extends ListItem:
       string + s" ${Constants.separator}"
     else
       string
+*/
 
 /**
  * Swing component displaying an infinite scrolling list.
  * The content comes from an Iterator that is read on demand.
  * @tparam A type of the items
  */
-class InfiniteList[A <: ListItem] extends JScrollPane {
+class InfiniteList[A](renderer: InfiniteList.Renderer[A]) extends JScrollPane {
   private val list = new JList[A]()
   private var pullingThread: Thread = _
   private var targetLengthQueue = new LinkedBlockingQueue[Int]()
@@ -48,12 +47,13 @@ class InfiniteList[A <: ListItem] extends JScrollPane {
     try {
       while (generator.hasNext) {
         val targetLength = targetQueue.take()
-        println(s"Pulling till ${targetLength}")
-        while (count < targetLength && generator.hasNext) do
+//        println(s"Pulling till $targetLength")
+        while (count < targetLength && generator.hasNext) {
           val element = generator.next()
-          println(s"Adding element $element (${model.size()}/$targetLength)")
+//          println(s"Adding element $element (${model.size()}/$targetLength)")
           count += 1
           invokeLater(() => appendElement(model, element))
+        }
       }
     } catch
       case _: InterruptedException =>
@@ -78,8 +78,8 @@ class InfiniteList[A <: ListItem] extends JScrollPane {
 
     override def getListCellRendererComponent(list: JList[_], value: Any, index: Int, isSelected: Boolean, cellHasFocus: Boolean): Component = {
       val label = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus).asInstanceOf[JLabel]
-      val item = value.asInstanceOf[ListItem]
-      label.setText(item.listItemLabel)
+      val item = value.asInstanceOf[A]
+      label.setText(renderer.label(item))
       label
     }
   }
@@ -120,7 +120,7 @@ class InfiniteList[A <: ListItem] extends JScrollPane {
    * the last one will be selected, but the selection will be updated until
    * it matches the intended selection.
    * */
-  def setIntendedSelection(index: Int) = {
+  def setIntendedSelection(index: Int): Unit = {
     intendedSelection = index
     setSelection(index)
   }
@@ -152,4 +152,10 @@ class InfiniteList[A <: ListItem] extends JScrollPane {
 
   private def ensureSelectionVisible(): Unit =
     list.ensureIndexIsVisible(list.getSelectedIndex)
+}
+
+object InfiniteList {
+  trait Renderer[A] {
+    def label(item: A): String
+  }
 }
