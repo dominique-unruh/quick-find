@@ -44,7 +44,7 @@ class SearchWindow(root: Item) extends JFrame {
     if (path.last.isFolder)
       pushFolder(input.getText, index, path.last)
   }
-  
+
   private def pushFolder(searchString: String, index: Int, folder: Item): Unit =
     val sif = SearchIndexFolder(searchString, index, folder)
     searchStack.push(sif)
@@ -75,8 +75,11 @@ class SearchWindow(root: Item) extends JFrame {
     results.selectPrevious()
 
   private def escPressed(): Unit = {
-    if (searchStack.isEmpty)
+    if (searchStack.isEmpty && input.getText.isEmpty)
       close()
+    else if (searchStack.isEmpty)
+      input.setText("")
+      filter()
     else
       popFolder()
   }

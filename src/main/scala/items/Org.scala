@@ -32,7 +32,7 @@ object OrgFile {
   def apply(path: Path) : OrgFile = {
     final case class OrgHeadingBuilder(title: String, firstLine: Int, subheadings: mutable.Buffer[OrgHeading])
     val stack = mutable.Stack[OrgHeadingBuilder](OrgHeadingBuilder("", 1, new ListBuffer))
-    val content = Using (Source.fromFile(path.toFile)) { _.getLines.map(_.strip).toVector }.get
+    val content = Using (Source.fromFile(path.toFile)) { _.getLines.map(_.stripLineEnd).toVector }.get
 
     var lineno = 0
 
