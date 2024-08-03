@@ -1,10 +1,7 @@
 package de.unruh.quickfind
 
 import core.{ActivationHandler, SearchWindow}
-
-import de.unruh.quickfind.items.Directory
-
-import java.nio.file.Path
+import items.Directory
 
 object Main {
   lazy val ui = new SearchWindow(Directory("/home/unruh"))
