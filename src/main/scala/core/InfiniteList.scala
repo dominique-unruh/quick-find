@@ -27,6 +27,7 @@ class InfiniteList[A <: ListItem] extends JScrollPane {
   private val list = new JList[A]()
   private var pullingThread: Thread = _
   private var targetLengthQueue = new LinkedBlockingQueue[Int]()
+  private var intendedSelection = 0
   initialize()
 
   /** Set new content. */
@@ -94,26 +95,54 @@ class InfiniteList[A <: ListItem] extends JScrollPane {
     reachedBottom()
   }
 
+  /** Returns the index of the selected item.
+   * The list makes sure that there always is a selected item,
+   * unless it's empty (in which case -1 is returned). */
   def selected: Int = list.getSelectedIndex match
-    case -1 => 0
+    case -1 => if (list.getModel.getSize > 0) 0 else -1
     case index => index
 
-  def selectedItem: A = apply(selected)
+  /** Returns the selected item.
+   * @throws NoSuchElementException if the list is empty */
+  def selectedItem: A = {
+    val index = selected
+    if (index == -1) throw new NoSuchElementException()
+    apply(selected)
+  }
 
+  /** Sets the "intended" selection.
+   * If `<= index` elements have been be loaded so far from the generator,
+   * the last one will be selected, but the selection will be updated until
+   * it matches the intended selection.
+   * */
+  def setIntendedSelection(index: Int) = {
+    intendedSelection = index
+    setSelection(index)
+  }
+
+  /** Returns the `index`-th element of the list. */
   def apply(index: Int): A = list.getModel.getElementAt(index)
-
-  def selectNext(): Unit =
-    list.setSelectedIndex(list.getSelectedIndex + 1)
-    ensureSelectionVisible()
-
-  def selectPrevious(): Unit =
-    if list.getSelectedIndex < 1 then
+  
+  private def setSelection(index: Int): Unit = {
+    if (index < 0)
       list.setSelectedIndex(0)
+    else if (index >= list.getModel.getSize)
+      list.setSelectedIndex(list.getModel.getSize - 1)
     else
-      list.setSelectedIndex(list.getSelectedIndex - 1)
+      list.setSelectedIndex(index)
     ensureSelectionVisible()
+  }
+  
+  /** Moves the selection up by one item.
+   * If we are on the top, nothing happens. */
+  def selectNext(): Unit =
+    setSelection(selected + 1)
 
+  /** Moves the selection down by one item.
+   * If we are on the bottom, nothing happens. */
+  def selectPrevious(): Unit =
+    setSelection(selected - 1)
+    
   private def ensureSelectionVisible(): Unit =
     list.ensureIndexIsVisible(list.getSelectedIndex)
-
 }
