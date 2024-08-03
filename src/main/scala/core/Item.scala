@@ -4,7 +4,6 @@ package core
 import java.io.{IOException, UncheckedIOException}
 import java.nio.file.{Files, Path}
 import scala.collection.mutable
-import scala.jdk.StreamConverters.*
 
 /** An item in the search results. */
 trait Item {
@@ -59,33 +58,4 @@ final class ItemPath private (foldersReverse: List[Folder], val item: Item) exte
   def append(item: Item): ItemPath = ItemPath(this.item.asInstanceOf[Folder] :: foldersReverse, item)
   /** Iterates over the folders followed by the item */
   override def iterator: Iterator[Item] = (item :: foldersReverse).reverseIterator
-}
-
-/** For testing, will be removed */
-class DemoFile(path: Path) extends Item {
-  override val text: String =
-    path.getFileName match
-      case null => "null"
-      case path => path.toString
-
-  override def toString: String = path.toString
-
-  override def defaultAction(): Unit =
-    println(s"default ${path.toString}")
-    import scala.sys.process._
-    Seq("thunar", "--", path.toString).!
-}
-
-/** For testing, will be removed */
-class DemoDirectory(path: Path) extends DemoFile(path), Folder {
-  override lazy val children: Iterable[Item] =
-    try
-      for (file <- Files.list(path).toScala(List)) yield
-        if Files.isDirectory(file) then
-          DemoDirectory(file)
-        else
-          DemoFile(file)
-    catch
-      case _ : IOException => Nil
-      case _ : UncheckedIOException => Nil
 }

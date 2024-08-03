@@ -1,11 +1,13 @@
 package de.unruh.quickfind
 
-import core.{ActivationHandler, DemoDirectory, SearchWindow}
+import core.{ActivationHandler, SearchWindow}
+
+import de.unruh.quickfind.items.Directory
 
 import java.nio.file.Path
 
 object Main {
-  lazy val ui = new SearchWindow(DemoDirectory(Path.of("/home/unruh")))
+  lazy val ui = new SearchWindow(Directory("/home/unruh"))
 
   def main(args: Array[String]): Unit = {
     ui.activate()
