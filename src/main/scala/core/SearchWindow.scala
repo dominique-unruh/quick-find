@@ -7,6 +7,7 @@ import javax.swing.event.{DocumentEvent, DocumentListener}
 import javax.swing.*
 import scala.collection.mutable
 
+/** The main window of the app. */
 class SearchWindow(root: Folder) extends JFrame {
   private val prefix = new JLabel()
   private val input = new JTextField()
@@ -67,7 +68,6 @@ class SearchWindow(root: Folder) extends JFrame {
       val str = searchStack.reverseIterator.map(_.searchString).mkString("", s" ${Constants.separator} ", s" ${Constants.separator}")
       prefix.setText(str)
 
-
   private def downPressed(): Unit =
     results.selectNext()
 
@@ -122,6 +122,7 @@ class SearchWindow(root: Folder) extends JFrame {
 
   private def close(): Unit = setVisible(false)
 
+  /** Show the window, with reset search input. */
   def activate(): Unit = {
     searchStack.clear()
     input.setText("")

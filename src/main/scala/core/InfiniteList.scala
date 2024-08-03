@@ -7,16 +7,6 @@ import java.util.concurrent.LinkedBlockingQueue
 import javax.swing.SwingUtilities.invokeLater
 import javax.swing.{DefaultListCellRenderer, DefaultListModel, JLabel, JList, JScrollPane, ListCellRenderer, SwingUtilities}
 
-/*
-final class PathListItem(val path: ItemPath) extends ListItem:
-  override def listItemLabel: String =
-    val string = path.map(_.text).mkString(s" ${Constants.separator} ")
-    if path.item.isInstanceOf[Folder] then
-      string + s" ${Constants.separator}"
-    else
-      string
-*/
-
 /**
  * Swing component displaying an infinite scrolling list.
  * The content comes from an Iterator that is read on demand.

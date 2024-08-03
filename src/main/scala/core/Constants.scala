@@ -2,5 +2,6 @@ package de.unruh.quickfind
 package core
 
 object Constants {
-  val separator = "\u25B6"
+  /** Symbol to separate different levels of the item hierarchy with. */
+  val separator = "▶"
 }
