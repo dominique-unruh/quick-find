@@ -8,18 +8,19 @@ import javax.swing.*
 import scala.collection.mutable
 
 /** The main window of the app. */
-class SearchWindow(root: Folder) extends JFrame {
+class SearchWindow(root: Item) extends JFrame {
+  assert(root.isFolder)
   private val prefix = new JLabel()
   private val input = new JTextField()
   private val results = new InfiniteList[ItemPath](itemPathRenderer)
-  private final case class SearchIndexFolder(searchString: String, index: Int, folder: Folder)
+  private final case class SearchIndexFolder(searchString: String, index: Int, folder: Item)
   private val searchStack = mutable.Stack[SearchIndexFolder]()
   initialize()
 
   private object itemPathRenderer extends InfiniteList.Renderer[ItemPath] {
     override def label(path: ItemPath): String = {
       val string = path.map(_.text).mkString(s" ${Constants.separator} ")
-      if path.item.isInstanceOf[Folder] then
+      if path.last.isFolder then
         string + s" ${Constants.separator}"
       else
         string
@@ -30,22 +31,21 @@ class SearchWindow(root: Folder) extends JFrame {
     val search = input.getText.toLowerCase
     val iterator =
       for (path <- currentFolder.recursiveIterator
-           if path.item.text.toLowerCase.indexOf(search) != -1)
+           if path.last.text.toLowerCase.indexOf(search) != -1)
         yield path
     results.setGenerator(iterator)
   }
 
-  private def currentFolder: Folder = if searchStack.isEmpty then root else searchStack.head.folder
+  private def currentFolder: Item = if searchStack.isEmpty then root else searchStack.head.folder
 
-  private def tabPressed(): Unit =
+  private def tabPressed(): Unit = {
     val index = results.selected
     val path = results(index)
-    path.item match
-      case folder: Folder =>
-        pushFolder(input.getText, index, folder)
-      case item =>
-
-  private def pushFolder(searchString: String, index: Int, folder: Folder): Unit =
+    if (path.last.isFolder)
+      pushFolder(input.getText, index, path.last)
+  }
+  
+  private def pushFolder(searchString: String, index: Int, folder: Item): Unit =
     val sif = SearchIndexFolder(searchString, index, folder)
     searchStack.push(sif)
     updatePrefix()
@@ -83,7 +83,7 @@ class SearchWindow(root: Folder) extends JFrame {
 
   private def enterPressed(): Unit =
     val path = results.selectedItem
-    path.item.defaultAction()
+    path.last.defaultAction()
     close()
 
   private def shiftTabPressed(): Unit =

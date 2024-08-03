@@ -8,4 +8,4 @@ lazy val root = (project in file("."))
     idePackagePrefix := Some("de.unruh.quickfind")
   )
 
-//libraryDependencies += "org.scala-lang.modules" %% "scala-swing" % "3.0.0"
+//libraryDependencies += "com.orgzly" % "org-java" % "1.2.3"

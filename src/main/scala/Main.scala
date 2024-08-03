@@ -1,12 +1,11 @@
 package de.unruh.quickfind
 
 import core.{ActivationHandler, SearchWindow}
-import items.Directory
+import items.File
 
 object Main {
-  lazy val ui = new SearchWindow(Directory("/home/unruh"))
-
   def main(args: Array[String]): Unit = {
+    val ui = new SearchWindow(File("/home/unruh"))
     ui.activate()
     new ActivationHandler(appName = "quick-find", command = ui.activate()).run()
   }
