@@ -1,7 +1,7 @@
 package de.unruh.quickfind
 package items
 
-import core.Item
+import core.{Item, Utils}
 
 import java.io.{IOException, UncheckedIOException}
 import java.nio.file.{Files, Path}
@@ -19,9 +19,7 @@ sealed class File protected (path: Path) extends Item {
 
   /** Show the file in Thunar file manager */
   override def defaultAction(): Unit =
-    println(s"default ${path.toString}")
-    import scala.sys.process._
-    Seq("thunar", "--", path.toString).!
+    Utils.showInFileManager(path)
 
   override val isFolder: Boolean = Files.isDirectory(path)
 

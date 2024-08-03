@@ -8,7 +8,7 @@ import scala.collection.mutable
 /** An item in the search results. May contain other items. */
 trait Item {
   /** A descriptive text of the item. Will be used for display and search. */
-  val text: String
+  def text: String
   /** Default action that will be taken when user presses enter. */
   def defaultAction(): Unit
 
