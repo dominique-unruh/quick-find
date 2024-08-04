@@ -1,16 +1,17 @@
 package de.unruh.quickfind
 package items
 
-import core.{Item, Utils}
+import core.{Item, SVGImage, Utils}
 
 import java.io.{IOException, UncheckedIOException}
 import java.nio.file.{Files, Path}
+import scala.collection.IterableOnce
 import scala.jdk.StreamConverters.*
 
 /** An item representing a file in the file system. */
 sealed class File protected (path: Path) extends Item {
   /** The file name part of the path */
-  override val text: String =
+  override val title: String =
     path.getFileName match
       case null => "/"
       case path => path.toString
@@ -23,6 +24,8 @@ sealed class File protected (path: Path) extends Item {
 
   override val isFolder: Boolean = Files.isDirectory(path)
 
+  override val icon: SVGImage = if (isFolder) File.folderIcon else File.fileIcon
+
   override lazy val children: Iterable[Item] = {
     try
       for (file <- Files.list(path).toScala(List))
@@ -31,6 +34,16 @@ sealed class File protected (path: Path) extends Item {
       case _: IOException => Nil
       case _: UncheckedIOException => Nil
   }
+
+  override lazy val previewLine: String =
+    try
+      if (Files.isRegularFile(path) && Files.isReadable(path))
+        val iterator = Utils.getLines(path)
+        if (iterator.hasNext) iterator.next() else ""
+      else
+        ""
+    catch
+      case _ : IOException => ""
 }
 
 object File {
@@ -38,4 +51,6 @@ object File {
   def apply(path: Path): File = new File(path)
   /** Create a [[File]] from a path string */
   def apply(path: String): File = apply(Path.of(path))
+  private[items] val fileIcon = SVGImage.fromResource("/icons/file-svgrepo-com.svg")
+  private[items] val folderIcon = SVGImage.fromResource("/icons/file-part-2-svgrepo-com.svg")
 }

@@ -6,9 +6,10 @@ import core.{Item, Utils}
 import java.io.IOException
 import java.nio.file.Path
 
-class Explicit(val text: String, val children: Item*) extends Item {
+class Explicit(val title: String, val children: Item*) extends Item {
   override def defaultAction(): Unit = {}
   override def isFolder: Boolean = true
+  override def previewLine: String = ""
 }
 
 object Explicit {
@@ -29,7 +30,7 @@ object Explicit {
           throw new IOException(s"""Unknown type $typ in line "$line""""))
         factory(info)
       }
-    Explicit(text=Option(text).getOrElse(path.toString),
+    Explicit(title=Option(text).getOrElse(path.toString),
       children=children.toSeq*)
   }
 }

@@ -9,3 +9,9 @@ lazy val root = (project in file("."))
   )
 
 //libraryDependencies += "com.orgzly" % "org-java" % "1.2.3"
+libraryDependencies += "org.apache.xmlgraphics" % "batik-transcoder" % "1.17"
+libraryDependencies += "org.apache.xmlgraphics" % "batik-codec" % "1.17"
+libraryDependencies += "org.apache.xmlgraphics" % "batik-dom" % "1.17"
+libraryDependencies += "org.apache.xmlgraphics" % "batik-svggen" % "1.17"
+libraryDependencies += "org.apache.xmlgraphics" % "batik-util" % "1.17"
+libraryDependencies += "org.apache.xmlgraphics" % "batik-bridge" % "1.17"

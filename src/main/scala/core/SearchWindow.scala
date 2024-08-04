@@ -1,9 +1,12 @@
 package de.unruh.quickfind
 package core
 
+import DefaultItemPathRenderer.*
+
 import java.awt.event.KeyEvent
-import java.awt.{BorderLayout, Component, KeyEventDispatcher, KeyboardFocusManager}
-import javax.swing.*
+import java.awt.*
+import javax.swing.border.EmptyBorder
+import javax.swing.{Box, BoxLayout, DefaultListCellRenderer, JFrame, JLabel, JList, JPanel, JTextField, ListCellRenderer, WindowConstants}
 import javax.swing.event.{DocumentEvent, DocumentListener}
 import scala.collection.mutable
 
@@ -21,7 +24,7 @@ class SearchWindow(root: Item) extends JFrame {
     val search = input.getText.toLowerCase
     val iterator =
       for (path <- currentFolder.recursiveIterator
-           if path.last.text.toLowerCase.indexOf(search) != -1)
+           if path.last.title.toLowerCase.indexOf(search) != -1)
         yield path
     results.setGenerator(iterator)
   }
@@ -104,6 +107,7 @@ class SearchWindow(root: Item) extends JFrame {
       override def removeUpdate(documentEvent: DocumentEvent): Unit = filter()
       override def changedUpdate(documentEvent: DocumentEvent): Unit = filter()
     })
+    input.setFont(input.getFont.deriveFont(Constants.fontSize.toFloat))
     add(panel)
     KeyboardFocusManager.getCurrentKeyboardFocusManager.addKeyEventDispatcher((event: KeyEvent) => event.getID match
       case KeyEvent.KEY_PRESSED => event.getKeyCode match
@@ -120,8 +124,10 @@ class SearchWindow(root: Item) extends JFrame {
         case _ => false
       case _ => false)
     setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE)
-    setSize(400, 400)
+    val screenWidth = Toolkit.getDefaultToolkit.getScreenSize.width
+    setSize(screenWidth / 2, screenWidth / 4)
     setLocationRelativeTo(null)
+    setUndecorated(true)
   }
 
   private def close(): Unit = setVisible(false)
@@ -138,19 +144,67 @@ class SearchWindow(root: Item) extends JFrame {
 
 class DefaultItemPathRenderer extends ListCellRenderer[ItemPath] {
   private val defaultListCellRenderer = new DefaultListCellRenderer()
+  private val component = JPanel()
+  private val titleLabel = JLabel()
+  private val previewLabel = JLabel()
+  private var icon: ScalableImage = _
+  initialize()
 
-  private def label(path: ItemPath): String = {
-    val string = path.map(_.text).mkString(s" ${Constants.separator} ")
+  private def initialize(): Unit = {
+    component.setLayout(BoxLayout(component, BoxLayout.X_AXIS))
+    component.setBorder(EmptyBorder(4,2,4,2))
+    val textBox = Box.createVerticalBox()
+    textBox.add(titleLabel)
+    textBox.add(previewLabel)
+    val iconPanel = new JPanel {
+      override def paintComponent(g: Graphics): Unit =
+        super.paintComponent(g)
+        if (icon != null)
+          g.drawImage(icon.getImageAtSize(getWidth, getHeight), 0, 0, (_,_,_,_,_,_) => false)
+      override def getPreferredSize: Dimension = {
+        val height = textBox.getPreferredSize.height
+        Dimension(height, height)
+      }
+      override def getMaximumSize: Dimension = getPreferredSize
+      override def getMinimumSize: Dimension = getPreferredSize
+    }
+    iconPanel.setOpaque(false)
+
+    previewLabel.setFont(previewLabel.getFont.deriveFont(Font.PLAIN).deriveFont(Constants.fontSize.toFloat))
+    titleLabel.setFont(titleLabel.getFont.deriveFont(Font.BOLD).deriveFont(Constants.fontSize.toFloat))
+    component.add(Box.createHorizontalStrut(5))
+    component.add(iconPanel)
+    component.add(Box.createHorizontalStrut(5))
+    component.add(textBox)
+    component.setOpaque(true)
+  }
+
+  private def title(path: ItemPath): String = {
+    val string = path.map(_.title).mkString(s" ${Constants.separator} ")
     if path.last.isFolder then
       string + s" ${Constants.separator}"
     else
       string
   }
 
+  private def nonEmtpyString(string: String) =
+    if (string.isEmpty) " " else string
+
   override def getListCellRendererComponent(list: JList[_ <: ItemPath], item: ItemPath, index: Int, isSelected: Boolean, cellHasFocus: Boolean): Component = {
-    val label = defaultListCellRenderer.getListCellRendererComponent(list, item, index, isSelected, cellHasFocus).asInstanceOf[JLabel]
-    label.setText(this.label(item))
-    label
+    val bgColor =
+      if (isSelected) selectedCellColor
+      else if (index % 2 == 0) evenCellColor
+      else oddCellColor
+    component.setBackground(bgColor)
+    titleLabel.setText(nonEmtpyString(title(item))) // Ensure the label has height even if empty
+    icon = item.last.icon
+    previewLabel.setText(nonEmtpyString(item.last.previewLine)) // Ensure the label has height even if empty
+    component
   }
 }
 
+object DefaultItemPathRenderer {
+  val oddCellColor: Color = Color.white
+  val evenCellColor: Color = Color.lightGray
+  val selectedCellColor: Color = Color(200,200,255)
+}

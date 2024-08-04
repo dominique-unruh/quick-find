@@ -1,16 +1,20 @@
 package de.unruh.quickfind
 package core
 
+import java.awt.Image
 import java.io.{IOException, UncheckedIOException}
 import java.nio.file.{Files, Path}
 import scala.collection.mutable
 
 /** An item in the search results. May contain other items. */
 trait Item {
-  /** A descriptive text of the item. Will be used for display and search. */
-  def text: String
+  /** A descriptive title of the item. Will be used for display and search. */
+  def title: String
   /** Default action that will be taken when user presses enter. */
   def defaultAction(): Unit
+
+  /** A single line preview of the item's content */
+  def previewLine: String
 
   /** The children directly contained in this item.
    * Shall return the same children upon each invocation (e.g., `lazy val`). */
@@ -27,6 +31,9 @@ trait Item {
    * Contents of item with higher weights will be listed later.
    * (Useful for items where it is resource-intensive to load children, for example.) */
   def weight: Double = 1
+
+  /** Icon for this image. */
+  def icon: ScalableImage = Item.defaultIcon
 
   /** An iterable that returns all descendants of this item. */
   object recursiveIterable extends Iterable[ItemPath] {
@@ -61,4 +68,8 @@ final class ItemPath private (itemsReversed: List[Item]) extends Iterable[Item] 
   /** Iterates over the folders followed by the item */
   override def iterator: Iterator[Item] = itemsReversed.reverseIterator
   override def last: Item = itemsReversed.head
+}
+
+object Item {
+  val defaultIcon: SVGImage = SVGImage.fromResource("/icons/arrow-interface-next-svgrepo-com.svg")
 }

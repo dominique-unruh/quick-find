@@ -1,15 +1,13 @@
 package de.unruh.quickfind
 package items
 
-import core.{Item, Utils}
+import core.{Item, SVGImage, ScalableImage, Utils}
 
 import java.nio.file.Path
 import scala.collection.immutable.ArraySeq
 import scala.collection.{IndexedSeqView, mutable}
 import scala.collection.mutable.ListBuffer
-import scala.io.Source
 import scala.jdk.CollectionConverters.*
-import scala.util.Using
 
 /** A file in Emacs org-mode, with headings as children.
  * @param path Path of the org file
@@ -19,7 +17,14 @@ class OrgFile private (val path: Path, headings: Seq[OrgHeading], content: Index
   override def isFolder: Boolean = true
   override def defaultAction(): Unit =
     Utils.showInEditor(path, line=1)
-  override val text: String = path.getFileName.toString
+  override val title: String = path.getFileName.toString
+  override val icon: ScalableImage = OrgFile.icon
+  def preamble: IndexedSeqView[String] =
+    if (headings.isEmpty)
+      content.view
+    else
+      content.view.take(headings.head.firstLine - 1)
+  override def previewLine: String = if (preamble.nonEmpty) preamble(0) else ""
 }
 
 object OrgFile {
@@ -40,9 +45,9 @@ object OrgFile {
 
     def closeLastLevel() = {
       val last = stack.pop()
-      val headingContent = content.view.slice(last.firstLine-1, lineno-1)
-      val heading = new OrgHeading(path=path, title=last.title, startLine=last.firstLine, endLine=lineno-1,
-        subheadings=last.subheadings.toSeq, content=headingContent)
+//      val headingContent = content.view.slice(last.firstLine-1, lineno-1)
+      val heading = new OrgHeading(path=path, title=last.title, firstLine=last.firstLine, lastLine=lineno-1,
+        subheadings=last.subheadings.toSeq, fileContent=content)
       stack.head.subheadings += heading
     }
 
@@ -75,25 +80,39 @@ object OrgFile {
   }
   /** Like [[apply(path:Path)]], but the path is given as a string. */
   def apply(path: String): OrgFile = apply(Path.of(path))
+
+  val icon: SVGImage = SVGImage.fromResource("/icons/org-mode-unicorn.svg")
 }
 
 /**
  * A heading inside an org-file
  * @param path Path to the file
- * @param startLine Line containing the heading (starting from 1)
- * @param endLine End of the text after the heading (incl. subheadings) (starting from 1)
+ * @param firstLine Line containing the heading (starting from 1)
+ * @param lastLine End of the text after the heading (incl. subheadings) (starting from 1)
  * @param title Title of the heading
  * @param subheadings Subheadings of this heading
- * @param content content of this subheading (incl. heading itself)
+ * @param fileContent content of the whole file
  */
-class OrgHeading private[items] (path: Path, startLine: Int, endLine: Int, title: String,
-                                 subheadings: Seq[OrgHeading], content: IndexedSeqView[String]) extends Item {
+class OrgHeading private[items] (path: Path, val firstLine: Int, lastLine: Int, val title: String,
+                                 subheadings: Seq[OrgHeading], fileContent: IndexedSeq[String]) extends Item {
   override val children: Iterable[Item] = subheadings
-  override lazy val text: String = title
+
+  def content: IndexedSeqView[String] = fileContent.view.slice(firstLine - 1, lastLine)
 
   /** Content of this subheading, excluding the heading itself */
   def body: IndexedSeqView[String] = content.drop(1)
 
+  def preamble: IndexedSeqView[String] =
+    if (subheadings.isEmpty)
+      body
+    else
+      content.view.slice(firstLine - 1, subheadings.head.firstLine - 1)
+
   override def defaultAction(): Unit =
-    Utils.showInEditor(path, line=startLine)
+    Utils.showInEditor(path, line=firstLine)
+
+  override val icon: ScalableImage = OrgFile.icon
+
+  override def previewLine: String =
+    if (preamble.nonEmpty) preamble(1) else ""
 }
