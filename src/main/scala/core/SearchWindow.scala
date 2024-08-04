@@ -69,10 +69,16 @@ class SearchWindow(root: Item) extends JFrame {
       prefix.setText(str)
 
   private def downPressed(): Unit =
-    results.selectNext()
+    results.selectRelative(1)
 
   private def upPressed(): Unit =
-    results.selectPrevious()
+    results.selectRelative(-1)
+
+  private def pageDownPressed(): Unit =
+    results.selectRelative(10)
+
+  private def pageUpPressed(): Unit =
+    results.selectRelative(-10)
 
   private def escPressed(): Unit = {
     if (searchStack.isEmpty && input.getText.isEmpty)
@@ -84,10 +90,12 @@ class SearchWindow(root: Item) extends JFrame {
       popFolder()
   }
 
-  private def enterPressed(): Unit =
+  private def enterPressed(): Unit = try {
     val path = results.selectedItem
     path.last.defaultAction()
     close()
+  } catch
+    case _: NoSuchElementException =>
 
   private def shiftTabPressed(): Unit =
     popFolder()
@@ -114,8 +122,11 @@ class SearchWindow(root: Item) extends JFrame {
         case KeyEvent.VK_ESCAPE => escPressed(); true
         case KeyEvent.VK_DOWN => downPressed(); true
         case KeyEvent.VK_UP => upPressed(); true
+        case KeyEvent.VK_PAGE_UP => pageUpPressed(); true
+        case KeyEvent.VK_PAGE_DOWN => pageDownPressed(); true
         case KeyEvent.VK_ENTER => enterPressed(); true
         case KeyEvent.VK_W if event.isControlDown => close(); true
+        case KeyEvent.VK_Q if event.isControlDown => close(); true
         case _ => false
       case _ => false)
     setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE)

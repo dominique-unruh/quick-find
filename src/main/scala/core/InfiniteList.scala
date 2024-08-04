@@ -128,17 +128,12 @@ class InfiniteList[A](renderer: InfiniteList.Renderer[A]) extends JScrollPane {
     ensureSelectionVisible()
   }
 
-  /** Moves the selection up by one item.
-   * If we are on the top, nothing happens.
-   * (Will also adjust the intended selection.) */
-  def selectNext(): Unit =
-    setIntendedSelection(selected + 1)
-
-  /** Moves the selection down by one item.
-   * If we are on the bottom, nothing happens.
-   * (Will also adjust the intended selection.) */
-  def selectPrevious(): Unit =
-    setIntendedSelection(selected - 1)
+  /** Moves the selection down by `steps` items.
+   * If we go past top/bottom, we go to top/bottom.
+   * (Will also adjust the intended selection.)
+   * @param steps Number of steps to go down (negetive to go up). */
+  def selectRelative(steps: Int): Unit =
+    setIntendedSelection(selected + steps)
 
   private def ensureSelectionVisible(): Unit =
     list.ensureIndexIsVisible(list.getSelectedIndex)

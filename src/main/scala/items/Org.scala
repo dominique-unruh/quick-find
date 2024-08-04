@@ -4,7 +4,8 @@ package items
 import core.{Item, Utils}
 
 import java.nio.file.Path
-import scala.collection.mutable
+import scala.collection.immutable.ArraySeq
+import scala.collection.{IndexedSeqView, mutable}
 import scala.collection.mutable.ListBuffer
 import scala.io.Source
 import scala.jdk.CollectionConverters.*
@@ -13,7 +14,7 @@ import scala.util.Using
 /** A file in Emacs org-mode, with headings as children.
  * @param path Path of the org file
  * @param headings Toplevel headings in the file */
-class OrgFile private (val path: Path, headings: Seq[OrgHeading]) extends Item {
+class OrgFile private (val path: Path, headings: Seq[OrgHeading], content: IndexedSeq[String]) extends Item {
   override lazy val children: Iterable[Item] = headings
   override def isFolder: Boolean = true
   override def defaultAction(): Unit =
@@ -22,23 +23,26 @@ class OrgFile private (val path: Path, headings: Seq[OrgHeading]) extends Item {
 }
 
 object OrgFile {
-  private def getLineLevel(line: String): Int = {
-    var level = 0
-    while (line.nonEmpty && level <= line.length && line(level) == '*')
-      level += 1
-    level
-  }
-
+  /** Parses a `.org` file and returns an [[OrgFile]].
+   * @param path Location of the `.org` file */
   def apply(path: Path) : OrgFile = {
     final case class OrgHeadingBuilder(title: String, firstLine: Int, subheadings: mutable.Buffer[OrgHeading])
     val stack = mutable.Stack[OrgHeadingBuilder](OrgHeadingBuilder("", 1, new ListBuffer))
-    val content = Using (Source.fromFile(path.toFile)) { _.getLines.map(_.stripLineEnd).toVector }.get
-
+    val content = Using (Source.fromFile(path.toFile)) { _.getLines.map(_.stripLineEnd).to(ArraySeq) }.get
     var lineno = 0
+
+    def getLineLevel(line: String): Int = {
+      var level = 0
+      while (line.nonEmpty && level <= line.length && line(level) == '*')
+        level += 1
+      level
+    }
 
     def closeLastLevel() = {
       val last = stack.pop()
-      val heading = new OrgHeading(path=path, title=last.title, startLine=last.firstLine, endLine=lineno-1, subheadings=last.subheadings.toSeq)
+      val headingContent = content.view.slice(last.firstLine-1, lineno-1)
+      val heading = new OrgHeading(path=path, title=last.title, startLine=last.firstLine, endLine=lineno-1,
+        subheadings=last.subheadings.toSeq, content=headingContent)
       stack.head.subheadings += heading
     }
 
@@ -56,7 +60,7 @@ object OrgFile {
 
     for (line <- content) {
       lineno += 1
-      println(s"$lineno: $line")
+//      println(s"$lineno: $line")
       val level = getLineLevel(line)
       if (level > 0) {
         closeLevel(level)
@@ -67,9 +71,10 @@ object OrgFile {
     closeLevel(1)
     assert(stack.size==1)
 
-    new OrgFile(path=path, headings=stack.pop().subheadings.toSeq)
+    new OrgFile(path=path, headings=stack.pop().subheadings.toSeq, content=content)
   }
-  def apply(string: String): OrgFile = apply(Path.of(string))
+  /** Like [[apply(path:Path)]], but the path is given as a string. */
+  def apply(path: String): OrgFile = apply(Path.of(path))
 }
 
 /**
@@ -79,11 +84,15 @@ object OrgFile {
  * @param endLine End of the text after the heading (incl. subheadings) (starting from 1)
  * @param title Title of the heading
  * @param subheadings Subheadings of this heading
+ * @param content content of this subheading (incl. heading itself)
  */
 class OrgHeading private[items] (path: Path, startLine: Int, endLine: Int, title: String,
-                                 subheadings: Seq[OrgHeading]) extends Item {
+                                 subheadings: Seq[OrgHeading], content: IndexedSeqView[String]) extends Item {
   override val children: Iterable[Item] = subheadings
   override lazy val text: String = title
+
+  /** Content of this subheading, excluding the heading itself */
+  def body: IndexedSeqView[String] = content.drop(1)
 
   override def defaultAction(): Unit =
     Utils.showInEditor(path, line=startLine)
