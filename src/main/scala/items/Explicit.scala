@@ -20,7 +20,10 @@ object Explicit {
 
   def fromFile(path: Path, text: String = null): Explicit = {
     val children: Iterator[Item] =
-      for (line <- Utils.getLines(path)) yield {
+      for (line0 <- Utils.getLines(path);
+           line = line0.strip()
+           if line != ""
+           if !line.startsWith("#")) yield {
         val index = line.indexOf(':')
         if (index == -1)
           throw new IOException(s"""Missing : in line "$line"""")
