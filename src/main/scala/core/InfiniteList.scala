@@ -12,7 +12,7 @@ import javax.swing.{DefaultListCellRenderer, DefaultListModel, JLabel, JList, JS
  * The content comes from an Iterator that is read on demand.
  * @tparam A type of the items
  */
-class InfiniteList[A](renderer: ListCellRenderer[_ >: A]) extends JScrollPane {
+class InfiniteList[A <: AnyRef](renderer: ListCellRenderer[_ >: A], loadingItem: A) extends JScrollPane {
   private val list = new JList[A]()
   private var pullingThread: Thread = _
   private var targetLengthQueue = new LinkedBlockingQueue[Int]()
@@ -24,6 +24,7 @@ class InfiniteList[A](renderer: ListCellRenderer[_ >: A]) extends JScrollPane {
     if pullingThread != null then
       pullingThread.interrupt()
     val model = DefaultListModel[A]
+    model.addElement(loadingItem)
     targetLengthQueue = new LinkedBlockingQueue[Int]()
     list.setModel(model)
     setIntendedSelection(0)
@@ -45,13 +46,16 @@ class InfiniteList[A](renderer: ListCellRenderer[_ >: A]) extends JScrollPane {
           invokeLater(() => appendElement(model, element))
         }
       }
+      model.removeElementAt(count)
     } catch
       case _: InterruptedException =>
   }
 
   /** Must be called in "invokeLater" thread */
   private def appendElement(model: DefaultListModel[A], element: A): Unit = {
-    model.addElement(element)
+    assert (model.lastElement eq loadingItem)
+    model.insertElementAt(element, model.getSize - 1)
+//    model.addElement(element)
     setSelection(intendedSelection)
     SwingUtilities.invokeLater { () =>
       val bar = getVerticalScrollBar
@@ -118,7 +122,11 @@ class InfiniteList[A](renderer: ListCellRenderer[_ >: A]) extends JScrollPane {
   }
 
   /** Returns the `index`-th element of the list. */
-  def apply(index: Int): A = list.getModel.getElementAt(index)
+  def apply(index: Int): A = {
+    val item = list.getModel.getElementAt(index)
+    if (item eq loadingItem) throw new NoSuchElementException
+    item
+  }
 
   private def setSelection(index: Int): Unit = {
     if (index < 0)
@@ -133,7 +141,7 @@ class InfiniteList[A](renderer: ListCellRenderer[_ >: A]) extends JScrollPane {
   /** Moves the selection down by `steps` items.
    * If we go past top/bottom, we go to top/bottom.
    * (Will also adjust the intended selection.)
-   * @param steps Number of steps to go down (negetive to go up). */
+   * @param steps Number of steps to go down (negative to go up). */
   def selectRelative(steps: Int): Unit =
     setIntendedSelection(selected + steps)
 
