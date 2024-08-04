@@ -12,6 +12,9 @@ object Main {
 //    val root3 = OrgFile("/home/unruh/r/home/misc/work-processes.org")
 //    val root = Explicit("Main Menu", root1, root2, root3)
     val root = Explicit.fromFile(Path.of("main-menu.conf"))
+
+//    for (path <- root.recursiveIterable)
+//      println(path)
     val ui = new SearchWindow(root)
     ui.activate()
     new ActivationHandler(appName = "quick-find", command = ui.activate()).run()

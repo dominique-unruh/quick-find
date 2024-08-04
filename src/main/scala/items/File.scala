@@ -26,14 +26,16 @@ sealed class File protected (path: Path) extends Item {
 
   override val icon: SVGImage = if (isFolder) File.folderIcon else File.fileIcon
 
-  override lazy val children: Iterable[Item] = {
-    try
-      for (file <- Files.list(path).toScala(List))
-        yield new File(file)
-    catch
-      case _: IOException => Nil
-      case _: UncheckedIOException => Nil
-  }
+  override lazy val children: Iterable[Item] =
+    if (isFolder) {
+      try
+        for (file <- Files.list(path).toScala(List))
+          yield new File(file)
+      catch
+        case _: IOException => Nil
+        case _: UncheckedIOException => Nil
+    } else
+      Nil
 
   override lazy val previewLine: String =
     try

@@ -36,9 +36,8 @@ trait Item {
   def icon: ScalableImage = Item.defaultIcon
 
   /** An iterable that returns all descendants of this item. */
-  object recursiveIterable extends Iterable[ItemPath] {
+  object recursiveIterable extends Iterable[ItemPath]:
     override def iterator: Iterator[ItemPath] = recursiveIterator
-  }
 
   /** Same as [[recursiveIterable]], but as an iterator. */
   final def recursiveIterator : Iterator[ItemPath] = {
@@ -51,6 +50,7 @@ trait Item {
       override def hasNext: Boolean = queue.nonEmpty
       override def next(): ItemPath =
         val (weight, path) = queue.dequeue()
+//        println(s" <- $path ($weight)")
         for (child <- path.last.children)
           queue.enqueue((weight + path.last.weight, path.append(child)))
         path
