@@ -3,6 +3,8 @@ package core
 
 import java.nio.file.Path
 import scala.collection.mutable.ListBuffer
+import scala.io.Source
+import scala.util.Using
 
 object Utils {
   /** Shows `path` in the Thunar file manager. */
@@ -28,5 +30,19 @@ object Utils {
     commandLine += "--"
     commandLine += path.toString
     commandLine.run()
+  }
+
+  /** Returns an iterator over all lines in a file, lineendings stripped. */
+  def getLines(path: Path): Iterator[String] = {
+    val source = Source.fromFile(path.toFile)
+    val lines = source.getLines
+    new Iterator[String] {
+      override def hasNext: Boolean = {
+        val has = lines.hasNext
+        if (!has) source.close()
+        has
+      }
+      override def next(): String = lines.next().stripLineEnd
+    }
   }
 }
