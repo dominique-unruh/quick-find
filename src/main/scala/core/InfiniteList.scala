@@ -45,8 +45,9 @@ class InfiniteList[A <: AnyRef](renderer: ListCellRenderer[_ >: A], loadingItem:
           count += 1
           invokeLater(() => appendElement(model, element))
         }
+        if (Thread.interrupted) throw InterruptedException()
       }
-      model.removeElementAt(count)
+      invokeLater(() => model.removeElementAt(count))
     } catch
       case _: InterruptedException =>
   }

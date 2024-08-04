@@ -109,6 +109,7 @@ class SearchWindow(root: Item) extends JFrame {
       override def changedUpdate(documentEvent: DocumentEvent): Unit = filter()
     })
     input.setFont(input.getFont.deriveFont(Constants.fontSize.toFloat))
+    prefix.setFont(prefix.getFont.deriveFont(Constants.fontSize.toFloat))
     add(panel)
     KeyboardFocusManager.getCurrentKeyboardFocusManager.addKeyEventDispatcher((event: KeyEvent) => event.getID match
       case KeyEvent.KEY_PRESSED => event.getKeyCode match

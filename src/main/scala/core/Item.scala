@@ -49,6 +49,7 @@ trait Item {
     new Iterator[ItemPath]() {
       override def hasNext: Boolean = queue.nonEmpty
       override def next(): ItemPath =
+        if (Thread.interrupted) throw InterruptedException()
         val (weight, path) = queue.dequeue()
 //        println(s" <- $path ($weight)")
         for (child <- path.last.children)
