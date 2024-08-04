@@ -2,9 +2,9 @@ package de.unruh.quickfind
 package core
 
 import java.awt.event.KeyEvent
-import java.awt.{BorderLayout, KeyEventDispatcher, KeyboardFocusManager}
-import javax.swing.event.{DocumentEvent, DocumentListener}
+import java.awt.{BorderLayout, Component, KeyEventDispatcher, KeyboardFocusManager}
 import javax.swing.*
+import javax.swing.event.{DocumentEvent, DocumentListener}
 import scala.collection.mutable
 
 /** The main window of the app. */
@@ -12,20 +12,10 @@ class SearchWindow(root: Item) extends JFrame {
   assert(root.isFolder)
   private val prefix = new JLabel()
   private val input = new JTextField()
-  private val results = new InfiniteList[ItemPath](itemPathRenderer)
+  private val results = new InfiniteList[ItemPath](DefaultItemPathRenderer())
   private final case class SearchIndexFolder(searchString: String, index: Int, folder: Item)
   private val searchStack = mutable.Stack[SearchIndexFolder]()
   initialize()
-
-  private object itemPathRenderer extends InfiniteList.Renderer[ItemPath] {
-    override def label(path: ItemPath): String = {
-      val string = path.map(_.text).mkString(s" ${Constants.separator} ")
-      if path.last.isFolder then
-        string + s" ${Constants.separator}"
-      else
-        string
-    }
-  }
 
   private def filter(): Unit = {
     val search = input.getText.toLowerCase
@@ -145,3 +135,22 @@ class SearchWindow(root: Item) extends JFrame {
     filter()
   }
 }
+
+class DefaultItemPathRenderer extends ListCellRenderer[ItemPath] {
+  private val defaultListCellRenderer = new DefaultListCellRenderer()
+
+  private def label(path: ItemPath): String = {
+    val string = path.map(_.text).mkString(s" ${Constants.separator} ")
+    if path.last.isFolder then
+      string + s" ${Constants.separator}"
+    else
+      string
+  }
+
+  override def getListCellRendererComponent(list: JList[_ <: ItemPath], item: ItemPath, index: Int, isSelected: Boolean, cellHasFocus: Boolean): Component = {
+    val label = defaultListCellRenderer.getListCellRendererComponent(list, item, index, isSelected, cellHasFocus).asInstanceOf[JLabel]
+    label.setText(this.label(item))
+    label
+  }
+}
+
