@@ -86,8 +86,9 @@ class SearchWindow(root: Item) extends JFrame {
 
   private def enterPressed(): Unit = try {
     val path = results.selectedItem
-    path.last.defaultAction()
+    // If we close() after the defaultAction, then showInEmacs does not raise the Emacs frame, maybe due to some race condition with focus change?
     close()
+    path.last.defaultAction()
   } catch
     case _: NoSuchElementException =>
 

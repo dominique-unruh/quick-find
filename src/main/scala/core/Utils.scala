@@ -1,6 +1,8 @@
 package de.unruh.quickfind
 package core
 
+import org.apache.commons.text.StringEscapeUtils
+
 import java.nio.file.Path
 import scala.collection.mutable.ListBuffer
 import scala.io.Source
@@ -16,19 +18,22 @@ object Utils {
   /** Opens `path` in Emacs.
    * @param path File to open
    * @param line Line where to place cursor (-1 to not jump to specific line)
-   * @param column Column where to place cursor (-1 to not jump to specific column; must be -1 if `line` is -1)
    */
-  def showInEditor(path: Path, line: Int = -1, column: Int = -1): Unit = {
+  def showInEmacs(path: Path, line: Int = -1, elispCommands: Seq[String] = Seq.empty): Unit = {
     import scala.sys.process._
     val commandLine = ListBuffer[String]()
+    val quotedPath = StringEscapeUtils.escapeJava(path.toString)
     commandLine += "emacsclient"
-    (line, column) match
-      case (-1, -1) =>
-      case (line, -1) => commandLine += s"+$line"
-      case (-1, _) => throw new IllegalArgumentException("column passed without line")
-      case (line, column) => commandLine += s"+$line:$column"
-    commandLine += "--"
-    commandLine += path.toString
+    commandLine += "--eval"
+    commandLine += s"""(find-file "$quotedPath")"""
+    if (line > 0)
+      commandLine += s"""(goto-line $line)"""
+    commandLine += "(raise-frame)"
+    for (elisp <- elispCommands)
+      assert(elisp.startsWith("("), elisp)
+      assert(elisp.endsWith(")"), elisp)
+      commandLine += elisp
+    println(s"Invoking ${commandLine.mkString(" ")}")
     commandLine.run()
   }
 

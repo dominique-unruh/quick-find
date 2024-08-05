@@ -16,7 +16,7 @@ class OrgFile private (val path: Path, headings: Seq[OrgHeading], content: Index
   override lazy val children: Iterable[Item] = headings
   override def isFolder: Boolean = true
   override def defaultAction(): Unit =
-    Utils.showInEditor(path, line=1)
+    Utils.showInEmacs(path, elispCommands = Seq("(widen)"))
   override val title: String = path.getFileName.toString
   override val icon: ScalableImage = OrgFile.icon
   def preamble: IndexedSeqView[String] =
@@ -109,7 +109,7 @@ class OrgHeading private[items] (path: Path, val firstLine: Int, lastLine: Int, 
       content.view.slice(firstLine - 1, subheadings.head.firstLine - 1)
 
   override def defaultAction(): Unit =
-    Utils.showInEditor(path, line=firstLine)
+    Utils.showInEmacs(path, line=firstLine, elispCommands = Seq("(org-narrow-to-subtree)"))
 
   override val icon: ScalableImage = OrgFile.icon
 
