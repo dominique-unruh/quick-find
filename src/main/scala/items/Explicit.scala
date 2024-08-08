@@ -1,7 +1,7 @@
 package de.unruh.quickfind
 package items
 
-import core.{Item, Utils}
+import core.{Item, ScalableImage, Utils}
 
 import java.io.IOException
 import java.nio.file.Path
@@ -10,6 +10,7 @@ class Explicit(val title: String, val children: Item*) extends Item {
   override def defaultAction(): Unit = {}
   override def isFolder: Boolean = true
   override def previewLine: String = ""
+  override def icon: ScalableImage = Item.defaultIcon
 }
 
 object Explicit {

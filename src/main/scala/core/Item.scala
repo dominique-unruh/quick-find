@@ -30,12 +30,14 @@ trait Item {
   /** The weight of this item.
    * Contents of item with higher weights will be listed later.
    * (Useful for items where it is resource-intensive to load children, for example.) */
+  //noinspection ScalaWeakerAccess
   def weight: Double = 1
 
   /** Icon for this image. */
-  def icon: ScalableImage = Item.defaultIcon
+  def icon: ScalableImage /*= Item.defaultIcon*/
 
   /** An iterable that returns all descendants of this item. */
+  //noinspection ScalaWeakerAccess
   object recursiveIterable extends Iterable[ItemPath]:
     override def iterator: Iterator[ItemPath] = recursiveIterator
 

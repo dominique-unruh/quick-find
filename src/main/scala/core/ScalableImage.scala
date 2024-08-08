@@ -14,6 +14,13 @@ trait ScalableImage {
   def getImageAtSize(width: Int, height: Int): Image
 }
 
+/*
+object DummyImage extends ScalableImage {
+  override def getImageAtSize(width: Int, height: Int): Image =
+    new BufferedImage(width, height, BufferedImage.TYPE_BYTE_GRAY)
+}
+*/
+
 class SVGImage private (name: String, source: () => InputStream) extends ScalableImage {
   private var height: Int = -1
   private var width: Int = -1
@@ -46,5 +53,8 @@ class SVGImage private (name: String, source: () => InputStream) extends Scalabl
 }
 
 object SVGImage {
-  def fromResource(resource: String): SVGImage = SVGImage(resource, () => getClass.getResource(resource).openStream())
+  def fromResource(resource: String): SVGImage =
+    val resourceURL = getClass.getResource(resource)
+    assert(resourceURL != null, resource)
+    SVGImage(resource, () => resourceURL.openStream())
 }

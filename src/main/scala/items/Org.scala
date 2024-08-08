@@ -13,7 +13,8 @@ import scala.jdk.CollectionConverters.*
  * @param path Path of the org file
  * @param headings Toplevel headings in the file */
 class OrgFile private (val path: Path, headings: Seq[OrgHeading], content: IndexedSeq[String]) extends Item {
-  override lazy val children: Iterable[Item] = headings
+  override lazy val children: Iterable[Item] =
+    ParseText.parseText(path, preamble) ++ headings
   override def isFolder: Boolean = true
   override def defaultAction(): Unit =
     Utils.showInEmacs(path, elispCommands = Seq("(widen)"))
@@ -95,7 +96,8 @@ object OrgFile {
  */
 class OrgHeading private[items] (path: Path, val firstLine: Int, lastLine: Int, val title: String,
                                  subheadings: Seq[OrgHeading], fileContent: IndexedSeq[String]) extends Item {
-  override val children: Iterable[Item] = subheadings
+  override lazy val children: Iterable[Item] =
+    ParseText.parseText(path, preamble) ++ subheadings
 
   def content: IndexedSeqView[String] = fileContent.view.slice(firstLine - 1, lastLine)
 

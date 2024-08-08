@@ -151,6 +151,7 @@ object SearchWindow {
     override def defaultAction(): Unit = {}
     override val previewLine = ""
     override val title = "Loading..."
+    override val icon: ScalableImage = Item.defaultIcon
   }
 
   private val loadingItemPath = ItemPath(loadingItem)

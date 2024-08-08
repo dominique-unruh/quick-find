@@ -3,6 +3,7 @@ package core
 
 import org.apache.commons.text.StringEscapeUtils
 
+import java.net.URL
 import java.nio.file.Path
 import scala.collection.mutable.ListBuffer
 import scala.io.Source
@@ -50,4 +51,8 @@ object Utils {
       override def next(): String = lines.next().stripLineEnd
     }
   }
+  
+  def showInBrowser(url: URL): Unit =
+    import scala.sys.process._
+    Seq("chromium", "--", url.toString).run()
 }

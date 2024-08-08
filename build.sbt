@@ -10,3 +10,4 @@ lazy val root = (project in file("."))
 
 libraryDependencies += "org.apache.xmlgraphics" % "batik-transcoder" % "1.17"
 libraryDependencies += "org.apache.commons" % "commons-text" % "1.11.0"
+libraryDependencies += "org.nibor.autolink" % "autolink" % "0.11.0"
