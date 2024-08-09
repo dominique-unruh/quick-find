@@ -6,8 +6,7 @@ import SearchWindow.*
 
 import java.awt.{BorderLayout, KeyboardFocusManager, Toolkit}
 import java.awt.event.KeyEvent
-import javax.swing.border.EmptyBorder
-import javax.swing.{Box, BoxLayout, DefaultListCellRenderer, JFrame, JLabel, JList, JPanel, JTextField, ListCellRenderer, WindowConstants}
+import javax.swing.{Box, JFrame, JLabel, JPanel, JTextField, WindowConstants}
 import javax.swing.event.{DocumentEvent, DocumentListener}
 import scala.collection.mutable
 
@@ -24,7 +23,8 @@ class SearchWindow(root: Item) extends JFrame {
   private def filter(): Unit = {
     val search = input.getText.toLowerCase
     val iterator =
-      for (path <- currentFolder.recursiveIterator
+      for (maybePath <- currentFolder.recursiveIterator;
+           path <- maybePath
            if path.last.title.toLowerCase.indexOf(search) != -1)
         yield path
     results.setGenerator(iterator)

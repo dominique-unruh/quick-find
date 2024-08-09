@@ -29,34 +29,46 @@ trait Item {
 
   /** The weight of this item.
    * Contents of item with higher weights will be listed later.
+   **/
+  //noinspection ScalaWeakerAccess
+  def selfWeight: Double = 0
+
+  /** The weight of the children item.
+   * Will be effectively added onto the weights of all children.
    * (Useful for items where it is resource-intensive to load children, for example.) */
   //noinspection ScalaWeakerAccess
-  def weight: Double = 1
+  def childrenWeight: Double = 1
 
   /** Icon for this image. */
   def icon: ScalableImage /*= Item.defaultIcon*/
 
-  /** An iterable that returns all descendants of this item. */
+  /** An iterable that returns all descendants of this item.
+   * May return additional None elements inside the iteration.
+   **/
   //noinspection ScalaWeakerAccess
-  object recursiveIterable extends Iterable[ItemPath]:
-    override def iterator: Iterator[ItemPath] = recursiveIterator
+  object recursiveIterable extends Iterable[Option[ItemPath]]:
+    override def iterator: Iterator[Option[ItemPath]] = recursiveIterator
 
   /** Same as [[recursiveIterable]], but as an iterator. */
-  final def recursiveIterator : Iterator[ItemPath] = {
-    type Entry = (Double, ItemPath)
-    given Ordering[Entry] = Ordering.by[Entry, Double](_._1).reverse
-    val queue = mutable.PriorityQueue[Entry]()
+  final def recursiveIterator : Iterator[Option[ItemPath]] = {
+    final case class Entry(weight: Double, returnMyself: Boolean, path: ItemPath)
+    given Ordering[Entry] = Ordering.by[Entry, Double](_.weight).reverse
+    val unpackQueue = mutable.PriorityQueue[Entry]()
     for (child <- children)
-      queue.enqueue((0, ItemPath(child)))
-    new Iterator[ItemPath]() {
-      override def hasNext: Boolean = queue.nonEmpty
-      override def next(): ItemPath =
+      unpackQueue.enqueue(Entry(child.selfWeight, true, ItemPath(child)))
+    new Iterator[Option[ItemPath]]() {
+      override def hasNext: Boolean = unpackQueue.nonEmpty
+      override def next(): Option[ItemPath] =
         if (Thread.interrupted) throw InterruptedException()
-        val (weight, path) = queue.dequeue()
-//        println(s" <- $path ($weight)")
-        for (child <- path.last.children)
-          queue.enqueue((weight + path.last.weight, path.append(child)))
-        path
+        val entry = unpackQueue.dequeue()
+        val path = entry.path
+        if (entry.returnMyself)
+          unpackQueue.enqueue(Entry(entry.weight + path.last.childrenWeight, false, path))
+          Some(path)
+        else
+          for (child <- entry.path.last.children)
+            unpackQueue.enqueue(Entry(entry.weight + child.selfWeight, true, path.append(child)))
+          None
     }
   }
 }
