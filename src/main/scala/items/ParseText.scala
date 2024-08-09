@@ -32,9 +32,9 @@ object ParseText {
             items += new Link(url=uri.toURL, preview=Some((prefix,linkText,suffix)))
           case LinkType.EMAIL =>
             if (Email.isMessageId(linkText))
-              items += new Email(linkText, preview=Some((prefix,linkText,suffix)))
-            else
               items += new MessageId(linkText, preview=Some((prefix,linkText,suffix)))
+            else
+              items += new Email(linkText, preview=Some((prefix,linkText,suffix)))
           case LinkType.WWW =>
             assert(false)
 
