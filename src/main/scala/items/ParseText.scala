@@ -97,9 +97,6 @@ object ParseText {
       println(s"Item: $item")
   }
 
-  // TODO if those files are .org files, make them OrgFile's
-  // TODO allow special link formats for quick-find Item types
-  // TODO understand .org shell script links
   def parseText(path: Path, lines: IndexedSeqView[String]): IndexedSeq[Item] = {
     val items = VectorBuilder[Item]()
 //    val seen = mutable.HashSet[String]()

@@ -60,8 +60,7 @@ object Utils {
     throw AssertionError("unreachable code")
 
   private val trustedLocations = Seq(
-    Path.of("/home/unruh/r/home/misc"),
-    Path.of("/tmp")  // TODO REMOVE INSECURE
+    Path.of("/home/unruh/r/home/misc")
   )
   def trustedLocation(path: Path): Boolean = {
     val absPath = path.normalize().toAbsolutePath
