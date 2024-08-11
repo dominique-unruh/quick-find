@@ -63,6 +63,9 @@ object ParseText {
           (linkText.substring(0, index), linkText.substring(index + 1))
         }
 
+      lazy val (prefix, suffix) =
+        (line.substring(0, m.start), line.substring(m.end))
+
 //      println(("*****", typ, linkBody))
 
       typ match
@@ -78,7 +81,8 @@ object ParseText {
             items += File(filePath)
         case "shell" =>
           if (!Utils.trustedLocation(path)) break()
-          // TODO implement
+          items += ShellCommand(linkBody, trust=ShellCommand.trusted,
+            preview = Some((prefix, linkBody, suffix)))
         case _ =>
     }
   }
