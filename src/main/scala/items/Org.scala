@@ -13,6 +13,7 @@ import scala.jdk.CollectionConverters.*
  * @param path Path of the org file
  * @param headings Toplevel headings in the file */
 class OrgFile private (val path: Path, headings: Seq[OrgHeading], content: IndexedSeq[String]) extends Item {
+  override def toString: String = s"[OrgFile $path]"
   override lazy val children: Iterable[Item] =
     ParseText.parseText(path, preamble) ++ headings
   override def isFolder: Boolean = true

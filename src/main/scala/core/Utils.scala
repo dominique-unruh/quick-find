@@ -55,4 +55,17 @@ object Utils {
   def showInBrowser(url: URL): Unit =
     import scala.sys.process._
     Seq("chromium", "--", url.toString).run()
+
+  def unreachable: Nothing =
+    throw AssertionError("unreachable code")
+
+  private val trustedLocations = Seq(
+    Path.of("/home/unruh/r/home/misc"),
+    Path.of("/tmp")  // TODO REMOVE INSECURE
+  )
+  def trustedLocation(path: Path): Boolean = {
+    val absPath = path.normalize().toAbsolutePath
+    trustedLocations.exists(dir => absPath.startsWith(dir))
+  }
 }
+

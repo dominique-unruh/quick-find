@@ -6,6 +6,7 @@ import core.{Item, ScalableImage, Utils}
 import java.io.IOException
 import java.nio.file.Path
 
+// TODO REMOVE (obsolete because we can use .org files as main menus)
 class Explicit(val title: String, val children: Item*) extends Item {
   override def defaultAction(): Unit = {}
   override def isFolder: Boolean = true

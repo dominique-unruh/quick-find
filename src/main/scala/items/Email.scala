@@ -13,6 +13,8 @@ class Email(address: String, preview: Option[(String,String,String)])
   extends SnippetPreviewItem(preview), LeafItem {
   override def title: String = address
 
+  override def toString: String = s"[Email: $address]"
+  
   override def defaultAction(): Unit =
     import sys.process._
     Seq("thunderbird", "-compose", s"to=$address").run()
@@ -35,7 +37,6 @@ object Email {
    * @attribute type {messageid,address}
    * @attribute data string
    * @data
-   * address, 'Jessica.Hilger@zhv.rwth-aachen.de'
    * messageid, '...@...'
    * address, '...@...'
    * }}}
