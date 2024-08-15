@@ -112,7 +112,13 @@ class OrgHeading private[items] (path: Path, val firstLine: Int, lastLine: Int, 
       content.view.slice(firstLine - 1, subheadings.head.firstLine - 1)
 
   override def defaultAction(): Unit =
-    Utils.showInEmacs(path, line=firstLine, elispCommands = Seq("(org-narrow-to-subtree)"))
+    val elisp = Seq(
+      "(org-narrow-to-subtree)",
+      "(org-fold-hide-subtree)",
+      "(org-fold-show-entry)",
+      "(org-fold-show-children)",
+    )
+    Utils.showInEmacs(path, line=firstLine, elispCommands = elisp)
 
   override val icon: ScalableImage = OrgFile.icon
 
