@@ -7,6 +7,7 @@ import java.io.{IOException, UncheckedIOException}
 import java.nio.file.{Files, Path}
 import scala.collection.IterableOnce
 import scala.jdk.StreamConverters.*
+import scala.util.Using
 
 /** An item representing a file in the file system. */
 sealed class File protected (path: Path) extends Item {
@@ -29,8 +30,9 @@ sealed class File protected (path: Path) extends Item {
   override lazy val children: Iterable[Item] =
     if (isFolder) {
       try
-        for (file <- Files.list(path).toScala(List))
-          yield new File(file)
+        Using.resource (Files.list(path)) { files =>
+          for (file <- files.toScala(List))
+            yield new File(file) }
       catch
         case _: IOException => Nil
         case _: UncheckedIOException => Nil
