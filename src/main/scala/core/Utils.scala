@@ -8,6 +8,7 @@ import java.nio.file.Path
 import scala.collection.mutable.ListBuffer
 import scala.io.Source
 import scala.util.Using
+import scala.util.Using.Releasable
 
 object Utils {
   /** Shows `path` in the Thunar file manager. */
@@ -38,18 +39,25 @@ object Utils {
     commandLine.run()
   }
 
-  /** Returns an iterator over all lines in a file, lineendings stripped. */
-  def getLines(path: Path): Iterator[String] = {
+  /** Returns an iterator over all lines in a file, lineendings stripped.
+   *
+   * Closes the file automatically when all lines are read,
+   * and when the iterator is garbage collected, (TODO: not implemented)
+   * and the iterator can also be used with [[Using]].
+   * */
+  def getLines(path: Path): Iterator[String] & AutoCloseable = {
     val source = Source.fromFile(path.toFile)
     val lines = source.getLines
-    new Iterator[String] {
+    object iterator extends Iterator[String], AutoCloseable:
       override def hasNext: Boolean = {
         val has = lines.hasNext
         if (!has) source.close()
         has
       }
       override def next(): String = lines.next().stripLineEnd
-    }
+      override def close(): Unit =
+        source.close()
+    iterator
   }
   
   def showInBrowser(url: URL): Unit =

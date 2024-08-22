@@ -3,9 +3,10 @@ package items
 
 import core.{Item, SVGImage, Utils}
 
-import java.io.{IOException, UncheckedIOException}
+import java.io.{FileReader, IOException, UncheckedIOException}
 import java.nio.file.{Files, Path}
 import scala.collection.IterableOnce
+import scala.io.Source
 import scala.jdk.StreamConverters.*
 import scala.util.Using
 
@@ -42,8 +43,7 @@ sealed class File protected (path: Path) extends Item {
   override lazy val previewLine: String =
     try
       if (Files.isRegularFile(path) && Files.isReadable(path))
-        val iterator = Utils.getLines(path)
-        if (iterator.hasNext) iterator.next() else ""
+        Using.resource(Utils.getLines(path)) { _.nextOption.getOrElse("") }
       else
         ""
     catch

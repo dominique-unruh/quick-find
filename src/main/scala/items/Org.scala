@@ -8,6 +8,7 @@ import scala.collection.immutable.ArraySeq
 import scala.collection.{IndexedSeqView, mutable}
 import scala.collection.mutable.ListBuffer
 import scala.jdk.CollectionConverters.*
+import scala.util.Using
 
 /** A file in Emacs org-mode, with headings as children.
  * @param path Path of the org file
@@ -35,7 +36,7 @@ object OrgFile {
   def apply(path: Path) : OrgFile = {
     final case class OrgHeadingBuilder(title: String, firstLine: Int, subheadings: mutable.Buffer[OrgHeading])
     val stack = mutable.Stack[OrgHeadingBuilder](OrgHeadingBuilder("", 1, new ListBuffer))
-    val content = Utils.getLines(path).to(ArraySeq)
+    val content = Using.resource(Utils.getLines(path))(_.to(ArraySeq))
     var lineno = 0
 
     def getLineLevel(line: String): Int = {
