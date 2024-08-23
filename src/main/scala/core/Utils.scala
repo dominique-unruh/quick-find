@@ -3,12 +3,12 @@ package core
 
 import org.apache.commons.text.StringEscapeUtils
 
+import java.lang.ref.Cleaner
 import java.net.URL
 import java.nio.file.Path
 import scala.collection.mutable.ListBuffer
 import scala.io.Source
 import scala.util.Using
-import scala.util.Using.Releasable
 
 object Utils {
   /** Shows `path` in the Thunar file manager. */
@@ -39,10 +39,15 @@ object Utils {
     commandLine.run()
   }
 
+  private val cleaner = Cleaner.create()
+
+  def registerWithCleaner(obj: Any, cleanup: => Unit): Unit =
+    cleaner.register(obj, () => cleanup)
+
   /** Returns an iterator over all lines in a file, lineendings stripped.
    *
    * Closes the file automatically when all lines are read,
-   * and when the iterator is garbage collected, (TODO: not implemented)
+   * and when the iterator is garbage collected,
    * and the iterator can also be used with [[Using]].
    * */
   def getLines(path: Path): Iterator[String] & AutoCloseable = {
@@ -54,9 +59,10 @@ object Utils {
         if (!has) source.close()
         has
       }
-      override def next(): String = lines.next().stripLineEnd
+      override def next(): String = lines.next()
       override def close(): Unit =
         source.close()
+    registerWithCleaner(iterator, source.close())
     iterator
   }
   
