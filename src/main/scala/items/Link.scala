@@ -13,6 +13,8 @@ class Link(url: URL, preview: Option[(String,String,String)])
     Utils.showInBrowser(url)
 
   override def toString: String = s"[Link $url]"
+
+  override val equalityKey: AnyRef = (url, preview)
 }
 
 object Link {

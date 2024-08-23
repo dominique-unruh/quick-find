@@ -146,12 +146,14 @@ class SearchWindow(root: Item) extends JFrame {
 }
 
 object SearchWindow {
+  // TODO equals, hashCode
   private object loadingItem extends Item {
     override val children: List[Item] = Nil
     override def defaultAction(): Unit = {}
     override val previewLine = ""
     override val title = "Loading..."
     override val icon: ScalableImage = Item.defaultIcon
+    override val equalityKey: AnyRef = this
   }
 
   private val loadingItemPath = ItemPath(loadingItem)

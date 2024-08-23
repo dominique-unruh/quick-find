@@ -8,7 +8,6 @@ import java.net.URL
 import java.nio.file.Path
 import scala.collection.mutable.ListBuffer
 import scala.io.Source
-import scala.util.Using
 
 object Utils {
   /** Shows `path` in the Thunar file manager. */

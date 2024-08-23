@@ -1,8 +1,6 @@
 package de.unruh.quickfind
 package core
 
-import core.Item
-
 import org.apache.commons.text.StringEscapeUtils
 
 trait SnippetPreviewItem(preview: Option[(String,String,String)]) extends Item {

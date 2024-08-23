@@ -12,6 +12,7 @@ class Explicit(val title: String, val children: Item*) extends Item {
   override def isFolder: Boolean = true
   override def previewLine: String = ""
   override def icon: ScalableImage = Item.defaultIcon
+  override val equalityKey: AnyRef = (title, children)
 }
 
 object Explicit {

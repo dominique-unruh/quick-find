@@ -20,6 +20,8 @@ class Email(address: String, preview: Option[(String,String,String)])
     Seq("thunderbird", "-compose", s"to=$address").run()
 
   override def icon: ScalableImage = Email.icon
+
+  override val equalityKey: AnyRef = (address, preview)
 }
 
 object Email {

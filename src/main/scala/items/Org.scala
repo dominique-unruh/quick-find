@@ -28,6 +28,7 @@ class OrgFile private (val path: Path, headings: Seq[OrgHeading], content: Index
     else
       content.view.take(headings.head.firstLine - 1)
   override def previewLine: String = if (preamble.nonEmpty) preamble(0) else ""
+  override val equalityKey: AnyRef = path
 }
 
 object OrgFile {
@@ -100,7 +101,7 @@ class OrgHeading private[items] (path: Path, val firstLine: Int, lastLine: Int, 
                                  subheadings: Seq[OrgHeading], fileContent: IndexedSeq[String]) extends Item {
   override lazy val children: Iterable[Item] =
     ParseText.parseText(path, preamble) ++ subheadings
-
+  override val equalityKey: AnyRef = (path, firstLine, lastLine)
   def content: IndexedSeqView[String] = fileContent.view.slice(firstLine - 1, lastLine)
 
   /** Content of this subheading, excluding the heading itself */
