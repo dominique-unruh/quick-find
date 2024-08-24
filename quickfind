@@ -1,1 +1,2 @@
+cd -- "${BASH_SOURCE%/*}/"
 target/universal/stage/bin/quickfind
