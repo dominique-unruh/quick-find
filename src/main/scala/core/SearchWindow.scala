@@ -139,6 +139,7 @@ class SearchWindow(root: Item) extends JFrame {
   def activate(): Unit = {
     searchStack.clear()
     input.setText("")
+    input.requestFocusInWindow()
     updatePrefix()
     setVisible(true)
     filter()
