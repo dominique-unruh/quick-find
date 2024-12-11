@@ -4,6 +4,7 @@ package core
 import org.apache.commons.text.StringEscapeUtils
 import org.apache.xmlgraphics.io.Resource
 
+import java.lang.ref.Cleaner
 import java.net.URL
 import java.nio.file.Path
 import java.util.concurrent.{Executors, TimeUnit}
@@ -42,18 +43,31 @@ object Utils {
     commandLine.run()
   }
 
-  /** Returns an iterator over all lines in a file, lineendings stripped. */
-  def getLines(path: Path): Iterator[String] = {
+  private val cleaner = Cleaner.create()
+
+  def registerWithCleaner(obj: Any, cleanup: => Unit): Unit =
+    cleaner.register(obj, () => cleanup)
+
+  /** Returns an iterator over all lines in a file, lineendings stripped.
+   *
+   * Closes the file automatically when all lines are read,
+   * and when the iterator is garbage collected,
+   * and the iterator can also be used with [[Using]].
+   * */
+  def getLines(path: Path): Iterator[String] & AutoCloseable = {
     val source = Source.fromFile(path.toFile)
     val lines = source.getLines
-    new Iterator[String] {
+    object iterator extends Iterator[String], AutoCloseable:
       override def hasNext: Boolean = {
         val has = lines.hasNext
         if (!has) source.close()
         has
       }
-      override def next(): String = lines.next().stripLineEnd
-    }
+      override def next(): String = lines.next()
+      override def close(): Unit =
+        source.close()
+    registerWithCleaner(iterator, source.close())
+    iterator
   }
   
   def showInBrowser(url: URL): Unit =

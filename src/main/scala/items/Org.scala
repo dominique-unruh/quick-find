@@ -8,6 +8,7 @@ import scala.collection.immutable.ArraySeq
 import scala.collection.{IndexedSeqView, mutable}
 import scala.collection.mutable.ListBuffer
 import scala.jdk.CollectionConverters.*
+import scala.util.Using
 
 /** A file in Emacs org-mode, with headings as children.
  * @param path Path of the org file
@@ -27,6 +28,7 @@ class OrgFile private (val path: Path, headings: Seq[OrgHeading], content: Index
     else
       content.view.take(headings.head.firstLine - 1)
   override def previewLine: String = if (preamble.nonEmpty) preamble(0) else ""
+  override val equalityKey: AnyRef = path
 }
 
 object OrgFile {
@@ -35,7 +37,7 @@ object OrgFile {
   def apply(path: Path) : OrgFile = {
     final case class OrgHeadingBuilder(title: String, firstLine: Int, subheadings: mutable.Buffer[OrgHeading])
     val stack = mutable.Stack[OrgHeadingBuilder](OrgHeadingBuilder("", 1, new ListBuffer))
-    val content = Utils.getLines(path).to(ArraySeq)
+    val content = Using.resource(Utils.getLines(path))(_.to(ArraySeq))
     var lineno = 0
 
     def getLineLevel(line: String): Int = {
@@ -99,7 +101,7 @@ class OrgHeading private[items] (path: Path, val firstLine: Int, lastLine: Int, 
                                  subheadings: Seq[OrgHeading], fileContent: IndexedSeq[String]) extends Item {
   override lazy val children: Iterable[Item] =
     ParseText.parseText(path, preamble) ++ subheadings
-
+  override val equalityKey: AnyRef = (path, firstLine, lastLine)
   def content: IndexedSeqView[String] = fileContent.view.slice(firstLine - 1, lastLine)
 
   /** Content of this subheading, excluding the heading itself */

@@ -40,6 +40,7 @@ class InfiniteList[A <: AnyRef](renderer: ListCellRenderer[_ >: A], loadingItem:
         val targetLength = targetQueue.take()
 //        println(s"Pulling till $targetLength")
         while (count < targetLength && generator.hasNext) {
+          if (Thread.interrupted) throw InterruptedException()
           val element = generator.next()
 //          println(s"Adding element $element (${model.size()}/$targetLength)")
           count += 1

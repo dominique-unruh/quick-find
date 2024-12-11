@@ -20,6 +20,8 @@ class Email(address: String, preview: Option[(String,String,String)])
     Seq("thunderbird", "-compose", s"to=$address").run()
 
   override def icon: ScalableImage = Email.icon
+
+  override val equalityKey: AnyRef = (address, preview)
 }
 
 object Email {
@@ -121,7 +123,7 @@ object Email {
     instance.setClassMissing()
     instance.setMissing(0)
     instance.setValue(1, address)
-    val classification = model.classifyInstance(instance)
+    val classification = model.synchronized(model.classifyInstance(instance))
     instance.setClassValue(classification)
     classification match
       case 0.0 => true

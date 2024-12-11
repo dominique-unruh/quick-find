@@ -1,8 +1,8 @@
 package de.unruh.quickfind
 package core
 
-import java.awt.Image
-import java.io.{IOException, UncheckedIOException}
+import de.unruh.quickfind.items.{OrgFile, OrgHeading}
+
 import java.nio.file.{Files, Path}
 import scala.collection.mutable
 
@@ -71,6 +71,22 @@ trait Item {
           None
     }
   }
+
+  /** Must implement an equals method such that two items are equal iff they represent the same item from the
+   * users point of view, even if their internal state (such as cached children) changes, or their content changes.
+   * (As a rule of thumb, two objects are the same, if after refreshing their content, and loading all children,
+   * they are essentially the same.)
+   *
+   * The main purpose is for [[Refreshable]], so that [[Refreshable]] can tell which
+   * children are new (instead of invalidating the whole subtree).
+   **/
+  override def equals(obj: Any): Boolean = obj match
+    case other: Item => (getClass == other.getClass) && (equalityKey == other.equalityKey)
+    case _ => false
+  /** Must match [[equals]]. */
+  override def hashCode(): Int = (getClass,equalityKey).hashCode
+  /** Must be defined to make the contract of [[equals]] and [[hashCode]] true. */
+  val equalityKey: AnyRef
 }
 
 /** A path of items, i.e., a nonempty sequence of [[Item]]s. */

@@ -7,6 +7,7 @@ import ShellCommand.*
 
 class ShellCommand(command: String, trust: trusted.type, preview: Option[(String,String,String)])
   extends LeafItem, SnippetPreviewItem(preview) {
+  override val equalityKey: AnyRef = (command, trust, preview)
   override def title: String = s"Run: $command"
   override def toString: String = s"[Shell $command]"
 

@@ -12,6 +12,8 @@ class MessageId(address: String, preview: Option[(String, String, String)])
     val command = Seq("/opt/cb_thunderlink/cb_thunderlink", s"thunderlink://messageid=$address")
     println(s"Running: ${command.mkString(" ")}")
     command.run()
+
+  override val equalityKey: AnyRef = (address, preview)
 }
 
 object MessageId {
