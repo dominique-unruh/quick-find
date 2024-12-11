@@ -6,6 +6,7 @@ import core.{Item, SVGImage, Utils}
 import java.io.{IOException, UncheckedIOException}
 import java.nio.file.{Files, Path}
 import scala.collection.IterableOnce
+import scala.concurrent.duration.Duration
 import scala.jdk.StreamConverters.*
 import scala.util.Using
 
@@ -30,7 +31,7 @@ sealed class File protected (path: Path) extends Item {
   override lazy val children: Iterable[Item] =
     if (isFolder) {
       try
-        Using.resource (Files.list(path)) { files =>
+        Utils.usingWithTimeout (Files.list(path), Duration("60s")) { files =>
           for (file <- files.toScala(List))
             yield new File(file) }
       catch

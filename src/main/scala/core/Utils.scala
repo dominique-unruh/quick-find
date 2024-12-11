@@ -2,12 +2,16 @@ package de.unruh.quickfind
 package core
 
 import org.apache.commons.text.StringEscapeUtils
+import org.apache.xmlgraphics.io.Resource
 
 import java.net.URL
 import java.nio.file.Path
+import java.util.concurrent.{Executors, TimeUnit}
 import scala.collection.mutable.ListBuffer
+import scala.concurrent.duration.Duration
 import scala.io.Source
 import scala.util.Using
+import scala.util.Using.Releasable
 
 object Utils {
   /** Shows `path` in the Thunar file manager. */
@@ -66,5 +70,12 @@ object Utils {
     val absPath = path.normalize().toAbsolutePath
     trustedLocations.exists(dir => absPath.startsWith(dir))
   }
-}
 
+  private val scheduledExecutor = Executors.newSingleThreadScheduledExecutor()
+
+  def usingWithTimeout[R : Releasable, A](resource: R, duration: Duration)(body: R => A) : A = {
+    scheduledExecutor.schedule((() => implicitly[Releasable[R]].release(resource)) : Runnable,
+      duration.toMicros, TimeUnit.MICROSECONDS)
+    Using.resource(resource)(body)
+  }
+}

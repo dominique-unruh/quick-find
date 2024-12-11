@@ -6,5 +6,5 @@ fi
 
 if ! socat /dev/null "/var/run/user/$UID/quick-find/activate"; then
    echo "Couldn't connect. Starting quickfind."
-   ./quickfind &
-fi	
+   ./quickfind &> ~/tmp/quickfind.log &
+fi
