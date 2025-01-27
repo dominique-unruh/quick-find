@@ -9,7 +9,7 @@ class MessageId(address: String, preview: Option[(String, String, String)])
   override def title: String = address
   override def defaultAction(): Unit =
     import sys.process._
-    val command = Seq("/opt/cb_thunderlink/cb_thunderlink", s"thunderlink://messageid=$address")
+    val command = Seq("/usr/bin/thunderbird", s"mid:$address")
     println(s"Running: ${command.mkString(" ")}")
     command.run()
 
