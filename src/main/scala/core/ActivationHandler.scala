@@ -11,7 +11,7 @@ import java.nio.file.{Files, Path}
  *
  * @param appName name of the app (for the socket file name)
  * @param command Code to run upon activation */
-class ActivationHandler(appName: String, command: => Unit) {
+class ActivationHandler(appName: String, command: () => Unit) {
   /** The path of the unix socket waiting for activation. */
   val socketPath: Path = Path.of("/var/run/user").resolve(userId.toString).resolve(appName).resolve("activate")
 
@@ -27,7 +27,8 @@ class ActivationHandler(appName: String, command: => Unit) {
       val channel = serverChannel.accept()
       channel.close()
       try
-        command
+        println("Activated.")
+        command()
       catch
         case e: Exception => e.printStackTrace()
     }

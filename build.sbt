@@ -12,6 +12,7 @@ lazy val root = (project in file("."))
     idePackagePrefix := Some("de.unruh.quickfind"),
     Compile / mainClass := Some("de.unruh.quickfind.Main"),
     Compile / discoveredMainClasses := Seq(),
+//    Universal / javaOptions +=
 
     libraryDependencies ++= Seq(
       "org.apache.xmlgraphics" % "batik-transcoder" % "1.17",
