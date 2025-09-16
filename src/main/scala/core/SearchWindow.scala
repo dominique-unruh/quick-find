@@ -155,6 +155,7 @@ object SearchWindow {
     override val title = "Loading..."
     override val icon: ScalableImage = Item.defaultIcon
     override val equalityKey: AnyRef = this
+    override val persistentKey: String = "LOADING ITEM"
   }
 
   private val loadingItemPath = ItemPath(loadingItem)

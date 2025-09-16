@@ -15,6 +15,7 @@ class Link(url: URL, preview: Option[(String,String,String)])
   override def toString: String = s"[Link $url]"
 
   override val equalityKey: AnyRef = (url, preview)
+  override val persistentKey: String = url.toString
 }
 
 object Link {

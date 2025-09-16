@@ -22,6 +22,7 @@ class Email(address: String, preview: Option[(String,String,String)])
   override def icon: ScalableImage = Email.icon
 
   override val equalityKey: AnyRef = (address, preview)
+  override val persistentKey: String = address
 }
 
 object Email {

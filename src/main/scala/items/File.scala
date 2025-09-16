@@ -16,6 +16,7 @@ import scala.util.Using
 /** An item representing a file in the file system. */
 sealed class File protected (path: Path) extends Item with Refreshable {
   override val equalityKey: AnyRef = path
+  override val persistentKey: String = path.toString
 
   /** The file name part of the path */
   override val title: String =

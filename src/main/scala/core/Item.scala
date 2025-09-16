@@ -29,6 +29,7 @@ trait Item {
 
   /** The weight of this item.
    * Contents of item with higher weights will be listed later.
+   * (In the final ordering, weights from the parents will be added to this.)
    **/
   //noinspection ScalaWeakerAccess
   def selfWeight: Double = 0
@@ -87,6 +88,7 @@ trait Item {
   override def hashCode(): Int = (getClass,equalityKey).hashCode
   /** Must be defined to make the contract of [[equals]] and [[hashCode]] true. */
   val equalityKey: AnyRef
+  val persistentKey: String
 }
 
 /** A path of items, i.e., a nonempty sequence of [[Item]]s. */

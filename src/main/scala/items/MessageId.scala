@@ -14,6 +14,7 @@ class MessageId(address: String, preview: Option[(String, String, String)])
     command.run()
 
   override val equalityKey: AnyRef = (address, preview)
+  override val persistentKey: String = address
 }
 
 object MessageId {
