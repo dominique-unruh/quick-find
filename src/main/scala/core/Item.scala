@@ -37,7 +37,7 @@ trait Item {
    * (In the final ordering, weights from the parents will be added to this.)
    **/
   //noinspection ScalaWeakerAccess
-  def selfWeight: Double = 0
+  def selfWeight: Double = 1
 
   def weight: Double = parentOption match {
     case Some(parent) => selfWeight + parent.weight

@@ -34,10 +34,13 @@ class SearchWindow(root: Item) extends JFrame {
         getValue match {
           case Some(value) => value
           case None =>
+            println(s"Creating sorted children list for $folder")
             val builder = Seq.newBuilder[Item]
             folder.addChildren(builder)
             val seq = builder.result()
-            recursiveChildrenCache.put(folder, WeakReference(seq))
+            val sortedSeq = seq.sortBy(_.weight)
+            // TODO Using WeakReferences probably rebuilds root too often
+            recursiveChildrenCache.put(folder, WeakReference(sortedSeq))
             seq
         }
       }
@@ -47,10 +50,10 @@ class SearchWindow(root: Item) extends JFrame {
   private def filter(): Unit = {
     val search = input.getText.nn.toLowerCase
     val iterator =
-      for (child <- getChildren(currentFolder);
+      for (child <- getChildren(currentFolder).iterator;
            if child.title.toLowerCase.nn.indexOf(search) != -1)
         yield child
-    results.setGenerator(iterator.iterator)
+    results.setGenerator(iterator)
   }
 
   private def currentFolder: Item = if searchStack.isEmpty then root else searchStack.head.folder

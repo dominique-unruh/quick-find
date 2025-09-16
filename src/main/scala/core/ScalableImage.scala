@@ -34,7 +34,7 @@ class SVGImage private (name: String, source: () => InputStream) extends Scalabl
 
   override def getImageAtSize(width: Int, height: Int): Image = synchronized {
     if (this.height != height || this.width != width) {
-      println(s"Rescaling $this to ${width}x$height")
+//      println(s"Rescaling $this to ${width}x$height")
       val transcoderInput = new TranscoderInput(source())
       val imageTranscoder = new ImageTranscoder:
         override def createImage(width: Int, height: Int): BufferedImage =
