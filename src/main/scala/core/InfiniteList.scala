@@ -12,7 +12,7 @@ import javax.swing.{DefaultListCellRenderer, DefaultListModel, JLabel, JList, JS
  * The content comes from an Iterator that is read on demand.
  * @tparam A type of the items
  */
-class InfiniteList[A <: AnyRef](renderer: ListCellRenderer[_ >: A], loadingItem: A) extends JScrollPane {
+class InfiniteList[A <: AnyRef](initialRenderer: ListCellRenderer[_ >: A], loadingItem: A) extends JScrollPane {
   private val list = new JList[A]()
   private var pullingThread: Option[Thread] = None
   private var targetLengthQueue = new LinkedBlockingQueue[Int]()
@@ -82,8 +82,11 @@ class InfiniteList[A <: AnyRef](renderer: ListCellRenderer[_ >: A], loadingItem:
   }
 */
 
-  private def initialize(): Unit = {
+  def setRenderer(renderer: ListCellRenderer[_ >: A]): Unit =
     list.setCellRenderer(renderer)
+
+  private def initialize(): Unit = {
+    list.setCellRenderer(initialRenderer)
 
     getViewport.nn.add(list)
 

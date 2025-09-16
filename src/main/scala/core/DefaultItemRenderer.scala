@@ -7,7 +7,7 @@ import javax.swing.*
 import scala.util.boundary
 import scala.util.boundary.break
 
-class DefaultItemRenderer(loadingItem: Item) extends ListCellRenderer[Item] {
+class DefaultItemRenderer(rootItem: Item, loadingItem: Item) extends ListCellRenderer[Item] {
   import DefaultItemRenderer._
 
   private val defaultListCellRenderer = new DefaultListCellRenderer()
@@ -65,6 +65,7 @@ class DefaultItemRenderer(loadingItem: Item) extends ListCellRenderer[Item] {
       boundary { while (true) {
         builder += current.title
         current.parentOption match {
+          case Some(value) if value eq rootItem => break()
           case Some(value) => current = value
           case None => break()
         }

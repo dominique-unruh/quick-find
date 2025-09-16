@@ -47,10 +47,10 @@ trait Item {
   /** Icon for this image. */
   def icon: ScalableImage /*= Item.defaultIcon*/
 
-  def addThisAndChildren(builder: mutable.Growable[Item]): Unit = {
-    builder.addOne(this)
+  def addChildren(builder: mutable.Growable[Item]): Unit = {
     for (child <- children)
-      child.addThisAndChildren(builder)
+      builder.addOne(child)
+      child.addChildren(builder)
   }
 
   val persistentKey: String

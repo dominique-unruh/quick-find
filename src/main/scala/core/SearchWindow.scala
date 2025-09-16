@@ -18,7 +18,7 @@ class SearchWindow(root: Item) extends JFrame {
   assert(root.isFolder)
   private val prefix = new JLabel()
   private val input = new JTextField()
-  private val results = new InfiniteList[Item](DefaultItemRenderer(loadingItem), loadingItem)
+  private val results = new InfiniteList[Item](DefaultItemRenderer(root, loadingItem), loadingItem)
   private final case class SearchIndexFolder(searchString: String, index: Int, folder: Item)
   private val searchStack = mutable.Stack[SearchIndexFolder]()
   private val recursiveChildrenCache =
@@ -35,7 +35,7 @@ class SearchWindow(root: Item) extends JFrame {
           case Some(value) => value
           case None =>
             val builder = Seq.newBuilder[Item]
-            folder.addThisAndChildren(builder)
+            folder.addChildren(builder)
             val seq = builder.result()
             recursiveChildrenCache.put(folder, WeakReference(seq))
             seq
@@ -78,12 +78,14 @@ class SearchWindow(root: Item) extends JFrame {
       results.setIntendedSelection(sif.index)
     }
 
-  private def updatePrefix(): Unit =
+  private def updatePrefix(): Unit = {
     if (searchStack.isEmpty)
       prefix.setText("")
     else
       val str = searchStack.reverseIterator.map(_.searchString).mkString("", s" ${Constants.separator} ", s" ${Constants.separator}")
       prefix.setText(str)
+    results.setRenderer(DefaultItemRenderer(currentFolder, loadingItem))
+  }
 
   private def downPressed(): Unit =
     results.selectRelative(1)
