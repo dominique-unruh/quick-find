@@ -1,7 +1,9 @@
 package de.unruh.quickfind
 package items
 
-import core.{Item, SVGImage, ScalableImage, Utils}
+import core.{ChildItem, Item, SVGImage, ScalableImage, Utils}
+
+import de.unruh.quickfind.items.OrgFile.parseOrgFile
 
 import java.nio.file.Path
 import scala.collection.immutable.ArraySeq
@@ -11,13 +13,14 @@ import scala.jdk.CollectionConverters.*
 import scala.util.Using
 
 /** A file in Emacs org-mode, with headings as children.
- * @param path Path of the org file
- * @param headings Toplevel headings in the file */
-class OrgFile private (val path: Path, headings: Seq[OrgHeading], content: IndexedSeq[String]) extends Item {
+ * @param path Path of the org file */
+class OrgFile(val parent: Item, val path: Path) extends ChildItem {
+  private val (headings: Seq[OrgHeading], content: IndexedSeq[String]) =
+    parseOrgFile(this, path)
   override def toString: String = s"[OrgFile $path]"
-  override lazy val children: Iterable[Item] =
-    ParseText.parseText(path, preamble) ++ headings
-  override def isFolder: Boolean = true
+  override val children: Iterable[ChildItem] =
+    ParseText.parseText(this, path, preamble) ++ headings
+  override val isFolder: Boolean = true
   override def defaultAction(): Unit =
     Utils.showInEmacs(path, elispCommands = Seq("(widen)"))
   override val title: String = path.getFileName.toString
@@ -28,14 +31,11 @@ class OrgFile private (val path: Path, headings: Seq[OrgHeading], content: Index
     else
       content.view.take(headings.head.firstLine - 1)
   override def previewLine: String = if (preamble.nonEmpty) preamble(0) else ""
-  override val equalityKey: AnyRef = path
   override val persistentKey: String = path.toString
 }
 
 object OrgFile {
-  /** Parses a `.org` file and returns an [[OrgFile]].
-   * @param path Location of the `.org` file */
-  def apply(path: Path) : OrgFile = {
+  private [items] def parseOrgFile(myself: OrgFile | OrgRoot, path: Path): (Seq[OrgHeading], IndexedSeq[String]) = {
     final case class OrgHeadingBuilder(title: String, firstLine: Int, subheadings: mutable.Buffer[OrgHeading])
     val stack = mutable.Stack[OrgHeadingBuilder](OrgHeadingBuilder("", 1, new ListBuffer))
     val content = Using.resource(Utils.getLines(path))(_.to(ArraySeq))
@@ -51,7 +51,7 @@ object OrgFile {
     def closeLastLevel() = {
       val last = stack.pop()
 //      val headingContent = content.view.slice(last.firstLine-1, lineno-1)
-      val heading = new OrgHeading(path=path, title=last.title, firstLine=last.firstLine, lastLine=lineno-1,
+      val heading = new OrgHeading(parent=myself, path=path, title=last.title, firstLine=last.firstLine, lastLine=lineno-1,
         subheadings=last.subheadings.toSeq, fileContent=content)
       stack.head.subheadings += heading
     }
@@ -81,10 +81,11 @@ object OrgFile {
     closeLevel(1)
     assert(stack.size==1)
 
-    new OrgFile(path=path, headings=stack.pop().subheadings.toSeq, content=content)
+    (stack.pop().subheadings.toSeq, content)
+//    new OrgFile(parent=parent, path=path, headings=stack.pop().subheadings.toSeq, content=content)
   }
-  /** Like [[apply(path:Path)]], but the path is given as a string. */
-  def apply(path: String): OrgFile = apply(Path.of(path))
+//  /** Like [[apply(path:Path)]], but the path is given as a string. */
+//  def apply(parent: Item, path: String): OrgFile = apply(parent, Path.of(path).nn)
 
   val icon: SVGImage = SVGImage.fromResource("/icons/org-mode-unicorn.svg")
 }
@@ -98,11 +99,10 @@ object OrgFile {
  * @param subheadings Subheadings of this heading
  * @param fileContent content of the whole file
  */
-class OrgHeading private[items] (path: Path, val firstLine: Int, lastLine: Int, val title: String,
-                                 subheadings: Seq[OrgHeading], fileContent: IndexedSeq[String]) extends Item {
-  override lazy val children: Iterable[Item] =
-    ParseText.parseText(path, preamble) ++ subheadings
-  override val equalityKey: AnyRef = (path, firstLine, lastLine)
+class OrgHeading private[items] (val parent: Item, path: Path, val firstLine: Int, lastLine: Int, val title: String,
+                                 subheadings: Seq[OrgHeading], fileContent: IndexedSeq[String]) extends ChildItem {
+  override val children: Iterable[ChildItem] =
+    ParseText.parseText(this, path, preamble) ++ subheadings
   override val persistentKey: String = path.toString + ":" + title
 
   def content: IndexedSeqView[String] = fileContent.view.slice(firstLine - 1, lastLine)

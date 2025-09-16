@@ -1,11 +1,11 @@
 package de.unruh.quickfind
 package items
 
-import core.{LeafItem, SVGImage, ScalableImage, SnippetPreviewItem, Utils}
+import core.{Item, LeafItem, SVGImage, ScalableImage, SnippetPreviewItem, Utils}
 
 import java.net.URL
 
-class Link(url: URL, preview: Option[(String,String,String)])
+class Link(val parent: Item, url: URL, preview: Option[(String,String,String)])
   extends SnippetPreviewItem(preview), LeafItem{
   override def title: String = url.toString
   override def icon: ScalableImage = Link.icon
@@ -14,7 +14,6 @@ class Link(url: URL, preview: Option[(String,String,String)])
 
   override def toString: String = s"[Link $url]"
 
-  override val equalityKey: AnyRef = (url, preview)
   override val persistentKey: String = url.toString
 }
 

@@ -4,32 +4,33 @@ package core
 import java.awt.{Color, Component, Dimension, Font, Graphics}
 import javax.swing.border.EmptyBorder
 import javax.swing.*
+import scala.util.boundary
+import scala.util.boundary.break
 
-class DefaultItemPathRenderer(loadingItem: ItemPath) extends ListCellRenderer[ItemPath] {
-  import DefaultItemPathRenderer._
+class DefaultItemRenderer(loadingItem: Item) extends ListCellRenderer[Item] {
+  import DefaultItemRenderer._
 
   private val defaultListCellRenderer = new DefaultListCellRenderer()
   private val component = JPanel()
   private val titleLabel = JLabel()
   private val previewLabel = JLabel()
-  private var icon: ScalableImage = _
+  private var icon: ScalableImage = Item.defaultIcon
   private val loadingComponent = JPanel()
   initialize()
 
   private def initialize(): Unit = {
     component.setLayout(BoxLayout(component, BoxLayout.X_AXIS))
     component.setBorder(EmptyBorder(4, 2, 4, 2))
-    val textBox = Box.createVerticalBox()
+    val textBox = Box.createVerticalBox().nn
     textBox.add(titleLabel)
     textBox.add(previewLabel)
     val iconPanel = new JPanel {
       override def paintComponent(g: Graphics): Unit =
         super.paintComponent(g)
-        if (icon != null)
-          g.drawImage(icon.getImageAtSize(getWidth, getHeight), 0, 0, (_, _, _, _, _, _) => false)
+        g.drawImage(icon.getImageAtSize(getWidth, getHeight), 0, 0, (_, _, _, _, _, _) => false)
 
       override def getPreferredSize: Dimension = {
-        val height = textBox.getPreferredSize.height
+        val height = textBox.getPreferredSize.nn.height
         Dimension(height, height)
       }
 
@@ -38,8 +39,8 @@ class DefaultItemPathRenderer(loadingItem: ItemPath) extends ListCellRenderer[It
     }
     iconPanel.setOpaque(false)
 
-    previewLabel.setFont(previewLabel.getFont.deriveFont(Font.PLAIN).deriveFont(Constants.fontSize.toFloat))
-    titleLabel.setFont(titleLabel.getFont.deriveFont(Font.BOLD).deriveFont(Constants.fontSize.toFloat))
+    previewLabel.setFont(previewLabel.getFont.nn.deriveFont(Font.PLAIN).nn.deriveFont(Constants.fontSize.toFloat))
+    titleLabel.setFont(titleLabel.getFont.nn.deriveFont(Font.BOLD).nn.deriveFont(Constants.fontSize.toFloat))
     component.add(Box.createHorizontalStrut(5))
     component.add(iconPanel)
     component.add(Box.createHorizontalStrut(5))
@@ -57,9 +58,22 @@ class DefaultItemPathRenderer(loadingItem: ItemPath) extends ListCellRenderer[It
     loadingComponent.add(loadingIcon)
   }
 
-  private def title(path: ItemPath): String = {
-    val string = path.map(_.title).mkString(s" ${Constants.separator} ")
-    if path.last.isFolder then
+  private def title(item: Item): String = {
+    val path = {
+      val builder = Seq.newBuilder[String]
+      var current = item
+      boundary { while (true) {
+        builder += current.title
+        current.parentOption match {
+          case Some(value) => current = value
+          case None => break()
+        }
+      } }
+      builder.result().reverse
+    }
+
+    val string = path.mkString(s" ${Constants.separator} ")
+    if item.isFolder then
       string + s" ${Constants.separator}"
     else
       string
@@ -68,7 +82,7 @@ class DefaultItemPathRenderer(loadingItem: ItemPath) extends ListCellRenderer[It
   private def nonEmtpyString(string: String) =
     if (string.isEmpty) " " else string
 
-  override def getListCellRendererComponent(list: JList[_ <: ItemPath], item: ItemPath, index: Int, isSelected: Boolean, cellHasFocus: Boolean): Component =
+  override def getListCellRendererComponent(list: JList[_ <: Item], item: Item, index: Int, isSelected: Boolean, cellHasFocus: Boolean): Component =
     if (item eq loadingItem)
       loadingComponent
     else {
@@ -78,15 +92,15 @@ class DefaultItemPathRenderer(loadingItem: ItemPath) extends ListCellRenderer[It
         else oddCellColor
       component.setBackground(bgColor)
       titleLabel.setText(nonEmtpyString(title(item))) // Ensure the label has height even if empty
-      icon = item.last.icon
-      previewLabel.setText(nonEmtpyString(item.last.previewLine)) // Ensure the label has height even if empty
+      icon = item.icon
+      previewLabel.setText(nonEmtpyString(item.previewLine)) // Ensure the label has height even if empty
       component
     }
 }
 
-object DefaultItemPathRenderer {
-  val oddCellColor: Color = Color.white
-  val evenCellColor: Color = Color.lightGray
+object DefaultItemRenderer {
+  val oddCellColor: Color = Color.white.nn
+  val evenCellColor: Color = Color.lightGray.nn
   val selectedCellColor: Color = Color(200, 200, 255)
   val loadingImage: SVGImage = SVGImage.fromResource("/icons/loading-svgrepo-com.svg")
 }

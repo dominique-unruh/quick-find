@@ -13,7 +13,7 @@ import java.nio.file.{Files, Path}
  * @param command Code to run upon activation */
 class ActivationHandler(appName: String, command: () => Unit) {
   /** The path of the unix socket waiting for activation. */
-  val socketPath: Path = Path.of("/var/run/user").resolve(userId.toString).resolve(appName).resolve("activate")
+  val socketPath: Path = Path.of("/var/run/user").nn.resolve(userId.toString).nn.resolve(appName).nn.resolve("activate").nn
 
   /** Waits for activation. */
   def run(): Unit = {
@@ -21,10 +21,10 @@ class ActivationHandler(appName: String, command: () => Unit) {
     Files.createDirectories(socketPath.getParent)
     Files.deleteIfExists(socketPath)
     val socketAddress = UnixDomainSocketAddress.of(socketPath)
-    val serverChannel = ServerSocketChannel.open(StandardProtocolFamily.UNIX)
+    val serverChannel = ServerSocketChannel.open(StandardProtocolFamily.UNIX).nn
     serverChannel.bind(socketAddress)
     while (true) {
-      val channel = serverChannel.accept()
+      val channel = serverChannel.nn.accept().nn
       channel.close()
       try
         println("Activated.")

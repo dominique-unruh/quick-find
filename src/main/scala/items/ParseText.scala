@@ -1,9 +1,9 @@
 package de.unruh.quickfind
 package items
 
-import core.{Item, Utils}
-
+import core.{ChildItem, Item, Utils}
 import core.Utils.unreachable
+
 import org.nibor.autolink.{LinkExtractor, LinkType}
 
 import java.net.{URI, URL}
@@ -17,38 +17,38 @@ import scala.util.boundary.break
 import scala.jdk.CollectionConverters.*
 
 object ParseText {
-  private val linkExtractor = LinkExtractor.builder()
-    .linkTypes(util.EnumSet.of(LinkType.URL, LinkType.EMAIL))
-    .build()
+  private val linkExtractor = LinkExtractor.builder().nn
+    .linkTypes(util.EnumSet.of(LinkType.URL, LinkType.EMAIL)).nn
+    .build().nn
 
-  private def parseLineLinkExtractor(line: String, items: VectorBuilder[Item]): Unit = {
-    val links = linkExtractor.extractLinks(line)
+  private def parseLineLinkExtractor(parent: Item, line: String, items: VectorBuilder[ChildItem]): Unit = {
+    val links = linkExtractor.extractLinks(line).nn
     for (link <- links.asScala) boundary {
-      val prefix = line.substring(0, link.getBeginIndex)
-      val linkText = line.substring(link.getBeginIndex, link.getEndIndex)
-      val suffix = line.substring(link.getEndIndex)
+      val prefix = line.substring(0, link.getBeginIndex).nn
+      val linkText = line.substring(link.getBeginIndex, link.getEndIndex).nn
+      val suffix = line.substring(link.getEndIndex).nn
 //      if (seen contains linkText)
 //        break()
 //      seen.add(linkText)
       link.getType match
         case LinkType.URL =>
           val uri = URI(linkText)
-          items += new Link(url = uri.toURL, preview = Some((prefix, linkText, suffix)))
+          items += new Link(parent = parent, url = uri.toURL.nn, preview = Some((prefix, linkText, suffix)))
         case LinkType.EMAIL =>
           if (Email.isMessageId(linkText))
-            items += new MessageId(linkText, preview = Some((prefix, linkText, suffix)))
+            items += new MessageId(parent = parent, address = linkText, preview = Some((prefix, linkText, suffix)))
           else
-            items += new Email(linkText, preview = Some((prefix, linkText, suffix)))
+            items += new Email(parent = parent, address = linkText, preview = Some((prefix, linkText, suffix)))
         case LinkType.WWW =>
           assert(false)
     }
   }
 
   private val orgLinkRegex = raw"\[\[([^\[\]]+)]]|\[\[([^\[\]]+)]\[([^\[\]]+)]]".r
-  private def parseLineOrgLink(path: Path, line: String, items: VectorBuilder[Item]): Unit = {
+  private def parseLineOrgLink(parent: Item, path: Path, line: String, items: VectorBuilder[ChildItem]): Unit = {
     for (m <- orgLinkRegex.findAllMatchIn(line)) boundary {
-      val linkText = {
-        val Seq(linkText1, linkText2, _) = m.subgroups
+      val linkText: String = {
+        val Seq(linkText1, linkText2, _) = m.subgroups : List[String | Null] // The type of Match.subgroups is wrong!
         if (linkText1 != null) linkText1
         else if (linkText2 != null) linkText2
         else unreachable
@@ -60,54 +60,40 @@ object ParseText {
         else {
           val index = linkText.indexOf(':')
           if (index == -1) break()
-          (linkText.substring(0, index), linkText.substring(index + 1))
+          (linkText.substring(0, index).nn, linkText.substring(index + 1).nn)
         }
 
       lazy val (prefix, suffix) =
-        (line.substring(0, m.start), line.substring(m.end))
+        (line.substring(0, m.start).nn, line.substring(m.end).nn)
 
 //      println(("*****", typ, linkBody))
 
       typ match
         case "file" =>
-          val filePath = path.getParent.resolve(linkBody).normalize()
+          val filePath = path.getParent.nn.resolve(linkBody).nn.normalize.nn
           if (!Files.exists(filePath)) break()
           if (!Files.isRegularFile(filePath, LinkOption.NOFOLLOW_LINKS)
             && !Utils.trustedLocation(path))
             break()
           if (linkBody.endsWith(".org") && Files.isRegularFile(filePath))
-            items += OrgFile(filePath)
+            items += OrgFile(parent, filePath)
           else
-            items += File(filePath)
+            items += FileItem(parent, filePath)
         case "shell" =>
           if (!Utils.trustedLocation(path)) break()
-          items += ShellCommand(linkBody, trust=ShellCommand.trusted,
+          items += ShellCommand(parent = parent, command = linkBody, trust=ShellCommand.trusted,
             preview = Some((prefix, linkBody, suffix)))
         case _ =>
     }
   }
 
-  // TODO REMOVE
-  def main(args: Array[String]): Unit = {
-    val text =
-      """* https://hello.com  x@unruh.de
-        | [[file:test.org]]  [[./test2.org][hello]] [[shell:ls]]
-        |  [[https://hello2.com]]  https://hello2.com
-        | """.stripMargin
-    val items = parseText(
-      path = Path.of("/tmp/test.txt"),
-      lines = text.lines.toList.asScala.map(_.stripLineEnd).toArray.view)
-    for (item <- items)
-      println(s"Item: $item")
-  }
-
-  def parseText(path: Path, lines: IndexedSeqView[String]): IndexedSeq[Item] = {
-    val items = VectorBuilder[Item]()
+  def parseText(parent: Item, path: Path, lines: IndexedSeqView[String]): IndexedSeq[ChildItem] = {
+    val items = VectorBuilder[ChildItem]()
 //    val seen = mutable.HashSet[String]()
     for (line <- lines)
 //      seen.clear()
-      parseLineLinkExtractor(line, items)
-      parseLineOrgLink(path, line, items)
+      parseLineLinkExtractor(parent, line, items)
+      parseLineOrgLink(parent, path, line, items)
     items.result
   }
 }

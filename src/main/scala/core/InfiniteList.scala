@@ -14,22 +14,22 @@ import javax.swing.{DefaultListCellRenderer, DefaultListModel, JLabel, JList, JS
  */
 class InfiniteList[A <: AnyRef](renderer: ListCellRenderer[_ >: A], loadingItem: A) extends JScrollPane {
   private val list = new JList[A]()
-  private var pullingThread: Thread = _
+  private var pullingThread: Option[Thread] = None
   private var targetLengthQueue = new LinkedBlockingQueue[Int]()
   private var intendedSelection = 0
   initialize()
 
   /** Set new content. */
   def setGenerator(generator: Iterator[A]): Unit = synchronized {
-    if pullingThread != null then
-      pullingThread.interrupt()
+    if pullingThread.isDefined then
+      pullingThread.get.interrupt()
     val model = DefaultListModel[A]
     model.addElement(loadingItem)
     targetLengthQueue = new LinkedBlockingQueue[Int]()
     list.setModel(model)
     setIntendedSelection(0)
-    pullingThread = new Thread(() => pull(generator, model, targetLengthQueue))
-    pullingThread.start()
+    pullingThread = Some(new Thread((() => pull(generator, model, targetLengthQueue)) : Runnable))
+    pullingThread.get.start()
     reachedBottom()
   }
 
@@ -37,7 +37,7 @@ class InfiniteList[A <: AnyRef](renderer: ListCellRenderer[_ >: A], loadingItem:
     var count = 0
     try {
       while (generator.hasNext) {
-        val targetLength = targetQueue.take()
+        val targetLength = targetQueue.take().nn
 //        println(s"Pulling till $targetLength")
         while (count < targetLength && generator.hasNext) {
           if (Thread.interrupted) throw InterruptedException()
@@ -60,14 +60,14 @@ class InfiniteList[A <: AnyRef](renderer: ListCellRenderer[_ >: A], loadingItem:
 //    model.addElement(element)
     setSelection(intendedSelection)
     SwingUtilities.invokeLater { () =>
-      val bar = getVerticalScrollBar
+      val bar = getVerticalScrollBar.nn
       if bar.getMaximum == bar.getValue + bar.getVisibleAmount then
         reachedBottom()
     }
   }
 
   private def reachedBottom(): Unit =
-    targetLengthQueue.put(list.getModel.getSize + 20)
+    targetLengthQueue.put(list.getModel.nn.getSize + 20)
 
 /*
   private object listCellRenderer extends DefaultListCellRenderer {
@@ -85,12 +85,12 @@ class InfiniteList[A <: AnyRef](renderer: ListCellRenderer[_ >: A], loadingItem:
   private def initialize(): Unit = {
     list.setCellRenderer(renderer)
 
-    getViewport.add(list)
+    getViewport.nn.add(list)
 
     // Add scroll listener to load more items when reaching the bottom
-    getVerticalScrollBar.addAdjustmentListener(new AdjustmentListener() {
+    getVerticalScrollBar.nn.addAdjustmentListener(new AdjustmentListener() {
       override def adjustmentValueChanged(e: AdjustmentEvent): Unit = {
-        if (!e.getValueIsAdjusting && e.getAdjustable.getMaximum == e.getValue + e.getAdjustable.getVisibleAmount)
+        if (!e.getValueIsAdjusting && e.getAdjustable.nn.getMaximum == e.getValue + e.getAdjustable.nn.getVisibleAmount)
           SwingUtilities.invokeLater(() => reachedBottom())
       }
     })
@@ -102,7 +102,7 @@ class InfiniteList[A <: AnyRef](renderer: ListCellRenderer[_ >: A], loadingItem:
    * The list makes sure that there always is a selected item,
    * unless it's empty (in which case -1 is returned). */
   def selected: Int = list.getSelectedIndex match
-    case -1 => if (list.getModel.getSize > 0) 0 else -1
+    case -1 => if (list.getModel.nn.getSize > 0) 0 else -1
     case index => index
 
   /** Returns the selected item.
@@ -125,7 +125,7 @@ class InfiniteList[A <: AnyRef](renderer: ListCellRenderer[_ >: A], loadingItem:
 
   /** Returns the `index`-th element of the list. */
   def apply(index: Int): A = {
-    val item = list.getModel.getElementAt(index)
+    val item = list.getModel.nn.getElementAt(index).nn
     if (item eq loadingItem) throw new NoSuchElementException
     item
   }
@@ -133,8 +133,8 @@ class InfiniteList[A <: AnyRef](renderer: ListCellRenderer[_ >: A], loadingItem:
   private def setSelection(index: Int): Unit = {
     if (index < 0)
       list.setSelectedIndex(0)
-    else if (index >= list.getModel.getSize)
-      list.setSelectedIndex(list.getModel.getSize - 1)
+    else if (index >= list.getModel.nn.getSize)
+      list.setSelectedIndex(list.getModel.nn.getSize - 1)
     else
       list.setSelectedIndex(index)
     ensureSelectionVisible()

@@ -29,8 +29,8 @@ class SVGImage private (name: String, source: () => InputStream) extends Scalabl
   override def toString: String = s"[Image $name]"
 
   def this(source: File) = this(source.toString, () => new FileInputStream(source))
-  def this(source: Path) = this(source.toFile)
-  def this(source: URL) = this(source.toString, () => source.openStream())
+  def this(source: Path) = this(source.toFile.nn)
+  def this(source: URL) = this(source.toString, () => source.openStream().nn)
 
   override def getImageAtSize(width: Int, height: Int): Image = synchronized {
     if (this.height != height || this.width != width) {
@@ -56,5 +56,5 @@ object SVGImage {
   def fromResource(resource: String): SVGImage =
     val resourceURL = getClass.getResource(resource)
     assert(resourceURL != null, resource)
-    SVGImage(resource, () => resourceURL.openStream())
+    SVGImage(resource, () => resourceURL.openStream().nn)
 }

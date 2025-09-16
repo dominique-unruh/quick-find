@@ -1,16 +1,20 @@
 package de.unruh.quickfind
 
 import core.{ActivationHandler, SearchWindow}
-import items.OrgFile
+import items.{OrgFile, OrgRoot}
+
+import java.nio.file.Path
 
 object Main {
   def main(args: Array[String]): Unit = {
     Thread.setDefaultUncaughtExceptionHandler { (thread, throwable) =>
       println(s"Uncaught exception (in $thread): $throwable")
-      throwable.printStackTrace()
+      throwable.nn.printStackTrace()
     }
 
-    val root = OrgFile("/home/unruh/r/home/misc/quick-find-menu.org")
+    println("Scanning")
+    val root: OrgRoot = OrgRoot(Path.of("/home/unruh/r/home/misc/quick-find-menu.org").nn)
+    println("Done")
 //    for (path <- root.recursiveIterable)
 //      println(path)
     val ui = new SearchWindow(root)

@@ -1,7 +1,7 @@
 package de.unruh.quickfind
 package items
 
-import core.{LeafItem, SVGImage, ScalableImage, SnippetPreviewItem}
+import core.{Item, LeafItem, SVGImage, ScalableImage, SnippetPreviewItem}
 
 import weka.classifiers.functions.SGDText
 import weka.core.{Attribute, DenseInstance, Instances, SerializationHelper}
@@ -9,7 +9,7 @@ import weka.core.{Attribute, DenseInstance, Instances, SerializationHelper}
 import java.util
 import scala.jdk.CollectionConverters.SeqHasAsJava
 
-class Email(address: String, preview: Option[(String,String,String)])
+class Email(val parent: Item, address: String, preview: Option[(String,String,String)])
   extends SnippetPreviewItem(preview), LeafItem {
   override def title: String = address
 
@@ -21,7 +21,6 @@ class Email(address: String, preview: Option[(String,String,String)])
 
   override def icon: ScalableImage = Email.icon
 
-  override val equalityKey: AnyRef = (address, preview)
   override val persistentKey: String = address
 }
 

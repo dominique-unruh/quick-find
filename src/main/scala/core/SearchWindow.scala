@@ -1,42 +1,65 @@
 package de.unruh.quickfind
 package core
 
-import DefaultItemPathRenderer.*
+import DefaultItemRenderer.*
 import SearchWindow.*
 
 import java.awt.{BorderLayout, KeyboardFocusManager, Toolkit}
 import java.awt.event.KeyEvent
+import java.util
 import javax.swing.{Box, JFrame, JLabel, JPanel, JTextField, WindowConstants}
 import javax.swing.event.{DocumentEvent, DocumentListener}
+import scala.collection.JavaConverters.mapAsScalaMapConverter
 import scala.collection.mutable
+import scala.ref.WeakReference
 
 /** The main window of the app. */
 class SearchWindow(root: Item) extends JFrame {
   assert(root.isFolder)
   private val prefix = new JLabel()
   private val input = new JTextField()
-  private val results = new InfiniteList[ItemPath](DefaultItemPathRenderer(loadingItemPath), loadingItemPath)
+  private val results = new InfiniteList[Item](DefaultItemRenderer(loadingItem), loadingItem)
   private final case class SearchIndexFolder(searchString: String, index: Int, folder: Item)
   private val searchStack = mutable.Stack[SearchIndexFolder]()
+  private val recursiveChildrenCache =
+    new util.IdentityHashMap[Item, WeakReference[Iterable[Item]]].asScala
   initialize()
 
+  private def getChildren(folder: Item): Iterable[Item] = {
+    def getValue = recursiveChildrenCache.get(folder).flatMap(_.get)
+
+    getValue match {
+      case Some(value) => value
+      case None => synchronized {
+        getValue match {
+          case Some(value) => value
+          case None =>
+            val builder = Seq.newBuilder[Item]
+            folder.addThisAndChildren(builder)
+            val seq = builder.result()
+            recursiveChildrenCache.put(folder, WeakReference(seq))
+            seq
+        }
+      }
+    }
+  }
+
   private def filter(): Unit = {
-    val search = input.getText.toLowerCase
+    val search = input.getText.nn.toLowerCase
     val iterator =
-      for (maybePath <- currentFolder.recursiveIterator;
-           path <- maybePath
-           if path.last.title.toLowerCase.indexOf(search) != -1)
-        yield path
-    results.setGenerator(iterator)
+      for (child <- getChildren(currentFolder);
+           if child.title.toLowerCase.nn.indexOf(search) != -1)
+        yield child
+    results.setGenerator(iterator.iterator)
   }
 
   private def currentFolder: Item = if searchStack.isEmpty then root else searchStack.head.folder
 
   private def tabPressed(): Unit = {
     val index = results.selected
-    val path = results(index)
-    if (path.last.isFolder)
-      pushFolder(input.getText, index, path.last)
+    val item = results(index)
+    if (item.isFolder)
+      pushFolder(input.getText.nn, index, item)
   }
 
   private def pushFolder(searchString: String, index: Int, folder: Item): Unit =
@@ -75,7 +98,7 @@ class SearchWindow(root: Item) extends JFrame {
     results.selectRelative(-10)
 
   private def escPressed(): Unit = {
-    if (searchStack.isEmpty && input.getText.isEmpty)
+    if (searchStack.isEmpty && input.getText.nn.isEmpty)
       close()
     else if (searchStack.isEmpty)
       input.setText("")
@@ -85,10 +108,10 @@ class SearchWindow(root: Item) extends JFrame {
   }
 
   private def enterPressed(): Unit = try {
-    val path = results.selectedItem
+    val item = results.selectedItem
     // If we close() after the defaultAction, then showInEmacs does not raise the Emacs frame, maybe due to some race condition with focus change?
     close()
-    path.last.defaultAction()
+    item.defaultAction()
   } catch
     case _: NoSuchElementException =>
 
@@ -98,23 +121,23 @@ class SearchWindow(root: Item) extends JFrame {
   private def initialize(): Unit = {
     setTitle("Quick Find")
     val panel = new JPanel()
-    val box = Box.createHorizontalBox()
+    val box = Box.createHorizontalBox().nn
     panel.setLayout(new BorderLayout())
     box.add(prefix)
     box.add(input)
     panel.add(box, BorderLayout.NORTH)
     panel.add(results, BorderLayout.CENTER)
-    input.getDocument.addDocumentListener(new DocumentListener {
+    input.getDocument.nn.addDocumentListener(new DocumentListener {
       override def insertUpdate(documentEvent: DocumentEvent): Unit = filter()
       override def removeUpdate(documentEvent: DocumentEvent): Unit = filter()
       override def changedUpdate(documentEvent: DocumentEvent): Unit = filter()
     })
-    input.setFont(input.getFont.deriveFont(Constants.fontSize.toFloat))
-    prefix.setFont(prefix.getFont.deriveFont(Constants.fontSize.toFloat))
+    input.setFont(input.getFont.nn.deriveFont(Constants.fontSize.toFloat))
+    prefix.setFont(prefix.getFont.nn.deriveFont(Constants.fontSize.toFloat))
     add(panel)
-    KeyboardFocusManager.getCurrentKeyboardFocusManager.addKeyEventDispatcher((event: KeyEvent) => event.getID match
-      case KeyEvent.KEY_PRESSED => event.getKeyCode match
-        case KeyEvent.VK_TAB if event.isShiftDown => shiftTabPressed(); true
+    KeyboardFocusManager.getCurrentKeyboardFocusManager.nn.addKeyEventDispatcher((event: KeyEvent | Null) => event.nn.getID match
+      case KeyEvent.KEY_PRESSED => event.nn.getKeyCode match
+        case KeyEvent.VK_TAB if event.nn.isShiftDown => shiftTabPressed(); true
         case KeyEvent.VK_TAB => tabPressed(); true
         case KeyEvent.VK_ESCAPE => escPressed(); true
         case KeyEvent.VK_DOWN => downPressed(); true
@@ -122,12 +145,12 @@ class SearchWindow(root: Item) extends JFrame {
         case KeyEvent.VK_PAGE_UP => pageUpPressed(); true
         case KeyEvent.VK_PAGE_DOWN => pageDownPressed(); true
         case KeyEvent.VK_ENTER => enterPressed(); true
-        case KeyEvent.VK_W if event.isControlDown => close(); true
-        case KeyEvent.VK_Q if event.isControlDown => close(); true
+        case KeyEvent.VK_W if event.nn.isControlDown => close(); true
+        case KeyEvent.VK_Q if event.nn.isControlDown => close(); true
         case _ => false
       case _ => false)
     setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE)
-    val screenWidth = Toolkit.getDefaultToolkit.getScreenSize.width
+    val screenWidth = Toolkit.getDefaultToolkit.nn.getScreenSize.nn.width
     setSize(screenWidth / 2, screenWidth / 4)
     setLocationRelativeTo(null)
     setUndecorated(true)
@@ -149,16 +172,16 @@ class SearchWindow(root: Item) extends JFrame {
 object SearchWindow {
   // TODO equals, hashCode
   private object loadingItem extends Item {
-    override val children: List[Item] = Nil
+    override val parentOption: Option[Item] = None
+    override val children: List[ChildItem] = Nil
     override def defaultAction(): Unit = {}
     override val previewLine = ""
     override val title = "Loading..."
     override val icon: ScalableImage = Item.defaultIcon
-    override val equalityKey: AnyRef = this
     override val persistentKey: String = "LOADING ITEM"
   }
 
-  private val loadingItemPath = ItemPath(loadingItem)
+//  private val loadingItemPath = ItemPath(loadingItem)
 }
 
 

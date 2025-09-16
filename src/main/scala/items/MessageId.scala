@@ -1,9 +1,9 @@
 package de.unruh.quickfind
 package items
 
-import core.{LeafItem, SVGImage, ScalableImage, SnippetPreviewItem}
+import core.{Item, LeafItem, SVGImage, ScalableImage, SnippetPreviewItem}
 
-class MessageId(address: String, preview: Option[(String, String, String)])
+class MessageId(val parent: Item, address: String, preview: Option[(String, String, String)])
   extends SnippetPreviewItem(preview), LeafItem {
   override def icon: ScalableImage = MessageId.icon
   override def title: String = address
@@ -13,7 +13,6 @@ class MessageId(address: String, preview: Option[(String, String, String)])
     println(s"Running: ${command.mkString(" ")}")
     command.run()
 
-  override val equalityKey: AnyRef = (address, preview)
   override val persistentKey: String = address
 }
 
