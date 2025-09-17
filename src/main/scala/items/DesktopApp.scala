@@ -5,7 +5,7 @@ package items
 import core.{ChildItem, Item, SVGImage, ScalableImage}
 
 import java.io.File
-import java.nio.file.Path
+import java.nio.file.{Files, Path}
 import scala.collection.mutable
 import scala.io.Source
 import scala.jdk.CollectionConverters.given
@@ -28,8 +28,14 @@ class DesktopAppItem(val parent: Item, app: DesktopApp) extends ChildItem {
   override def previewLine: String = s"${app.comment} \u2013 ${app.exec}"
   override val children: Iterable[ChildItem] = Seq.empty
   override def isFolder: Boolean = false
-  // TODO Should come from the app itself, or just something suitable fixed
-  override def icon: ScalableImage = SVGImage.fromResource("/icons/file-svgrepo-com.svg")
+  override def icon: ScalableImage = {
+    def default = SVGImage.fromResource("/icons/execute-svgrepo-com.svg")
+    lazy val path = Path.of(s"/usr/share/icons/hicolor/scalable/apps/${app.icon}.svg").nn
+    if (app.icon.isEmpty) default
+    else if (!Files.exists(path)) default
+    else SVGImage(path)
+  }
+
   override val persistentKey: String = app.toString
 }
 
@@ -38,8 +44,8 @@ class DesktopAppCollection(val parent: Item) extends ChildItem {
   override def title: String = "Desktop apps"
   override def defaultAction(): Unit = {}
   override def previewLine: String = ""
-  // TODO something suitable
-  override def icon: ScalableImage = SVGImage.fromResource("/icons/file-svgrepo-com.svg")
+  override def icon: ScalableImage = SVGImage.fromResource("/icons/execute-svgrepo-com.svg")
+
   override val persistentKey: String = "DesktopAppCollection"
 }
 
