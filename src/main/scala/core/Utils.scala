@@ -72,7 +72,7 @@ object Utils {
   
   def showInBrowser(url: URL): Unit =
     import scala.sys.process._
-    Seq("chromium", "--", url.toString).run()
+    Seq("firefox", "--", url.toString).run()
 
   def unreachable: Nothing =
     throw AssertionError("unreachable code")
