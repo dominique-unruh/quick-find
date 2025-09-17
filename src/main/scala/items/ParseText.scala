@@ -83,6 +83,8 @@ object ParseText {
           if (!Utils.trustedLocation(path)) break()
           items += ShellCommand(parent = parent, command = linkBody, trust=ShellCommand.trusted,
             preview = Some((prefix, linkBody, suffix)))
+        case "desktopapps" =>
+          items += DesktopAppCollection(parent)
         case _ =>
     }
   }

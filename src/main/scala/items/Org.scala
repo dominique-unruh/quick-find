@@ -127,6 +127,7 @@ class OrgHeading private[items] (val parent: Item, path: Path, val firstLine: In
 
   override val icon: ScalableImage = OrgFile.icon
 
-  override def previewLine: String =
-    if (preamble.nonEmpty) preamble(1) else ""
+  override def previewLine: String = {
+    if ((preamble `sizeCompare` 1) > 0) preamble(1) else ""
+  }
 }

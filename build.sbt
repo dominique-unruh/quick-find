@@ -20,6 +20,8 @@ lazy val root = (project in file("."))
       "org.apache.commons" % "commons-text" % "1.11.0",
       "org.nibor.autolink" % "autolink" % "0.11.0",
       "nz.ac.waikato.cms.weka" % "weka-stable" % "3.8.6",
+//      "com.github.hypfvieh" % "dbus-java-core" % "5.1.1",
+//      "com.github.hypfvieh" % "dbus-java-transport-native-unixsocket" % "5.1.1",
     )
   )
 
