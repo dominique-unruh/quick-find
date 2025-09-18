@@ -21,7 +21,7 @@ class DefaultItemRenderer(rootItem: Item, loadingItem: Item) extends ListCellRen
   private def initialize(): Unit = {
     component.setLayout(BoxLayout(component, BoxLayout.X_AXIS))
     component.setBorder(EmptyBorder(4, 2, 4, 2))
-    val textBox = Box.createVerticalBox().nn
+    val textBox = Box.createVerticalBox()
     textBox.add(titleLabel)
     textBox.add(previewLabel)
     val iconPanel = new JPanel {
@@ -30,7 +30,7 @@ class DefaultItemRenderer(rootItem: Item, loadingItem: Item) extends ListCellRen
         g.drawImage(icon.getImageAtSize(getWidth, getHeight), 0, 0, (_, _, _, _, _, _) => false)
 
       override def getPreferredSize: Dimension = {
-        val height = textBox.getPreferredSize.nn.height
+        val height = textBox.getPreferredSize.height
         Dimension(height, height)
       }
 
@@ -39,8 +39,8 @@ class DefaultItemRenderer(rootItem: Item, loadingItem: Item) extends ListCellRen
     }
     iconPanel.setOpaque(false)
 
-    previewLabel.setFont(previewLabel.getFont.nn.deriveFont(Font.PLAIN).nn.deriveFont(Constants.fontSize.toFloat))
-    titleLabel.setFont(titleLabel.getFont.nn.deriveFont(Font.BOLD).nn.deriveFont(Constants.fontSize.toFloat))
+    previewLabel.setFont(previewLabel.getFont.deriveFont(Font.PLAIN).deriveFont(Constants.fontSize.toFloat))
+    titleLabel.setFont(titleLabel.getFont.deriveFont(Font.BOLD).deriveFont(Constants.fontSize.toFloat))
     component.add(Box.createHorizontalStrut(5))
     component.add(iconPanel)
     component.add(Box.createHorizontalStrut(5))
@@ -100,8 +100,8 @@ class DefaultItemRenderer(rootItem: Item, loadingItem: Item) extends ListCellRen
 }
 
 object DefaultItemRenderer {
-  val oddCellColor: Color = Color.white.nn
-  val evenCellColor: Color = Color.lightGray.nn
+  val oddCellColor: Color = Color.white
+  val evenCellColor: Color = Color.lightGray
   val selectedCellColor: Color = Color(200, 200, 255)
   val loadingImage: SVGImage = SVGImage.fromResource("/icons/loading-svgrepo-com.svg")
 }

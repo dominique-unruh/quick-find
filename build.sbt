@@ -4,7 +4,7 @@ Global / onChangedBuildSource := ReloadOnSourceChanges
 Global / excludeLintKeys += idePackagePrefix
 
 ThisBuild / version := "0.1.0-SNAPSHOT"
-ThisBuild / scalaVersion := "3.3.3"
+ThisBuild / scalaVersion := "3.7.3"
 
 lazy val root = (project in file("."))
   .settings(
@@ -20,8 +20,7 @@ lazy val root = (project in file("."))
       "org.apache.commons" % "commons-text" % "1.11.0",
       "org.nibor.autolink" % "autolink" % "0.11.0",
       "nz.ac.waikato.cms.weka" % "weka-stable" % "3.8.6",
-//      "com.github.hypfvieh" % "dbus-java-core" % "5.1.1",
-//      "com.github.hypfvieh" % "dbus-java-transport-native-unixsocket" % "5.1.1",
+      "org.rocksdb" % "rocksdbjni" % "10.4.2",
     )
   )
 

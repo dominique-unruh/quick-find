@@ -85,7 +85,7 @@ object OrgFile {
 //    new OrgFile(parent=parent, path=path, headings=stack.pop().subheadings.toSeq, content=content)
   }
 //  /** Like [[apply(path:Path)]], but the path is given as a string. */
-//  def apply(parent: Item, path: String): OrgFile = apply(parent, Path.of(path).nn)
+//  def apply(parent: Item, path: String): OrgFile = apply(parent, Path.of(path))
 
   val icon: SVGImage = SVGImage.fromResource("/icons/org-mode-unicorn.svg")
 }

@@ -43,7 +43,7 @@ object Utils {
     commandLine.run()
   }
 
-  private val cleaner = Cleaner.create().nn
+  private val cleaner = Cleaner.create()
 
   def registerWithCleaner(obj: Any, cleanup: => Unit): Unit =
     cleaner.register(obj, () => cleanup)
@@ -55,7 +55,7 @@ object Utils {
    * and the iterator can also be used with [[Using]].
    * */
   def getLines(path: Path): Iterator[String] & AutoCloseable = {
-    val source = Source.fromFile(path.toFile.nn)
+    val source = Source.fromFile(path.toFile)
     val lines = source.getLines
     object iterator extends Iterator[String], AutoCloseable:
       override def hasNext: Boolean = {
@@ -81,11 +81,11 @@ object Utils {
     Path.of("/home/unruh/r/home/misc")
   )
   def trustedLocation(path: Path): Boolean = {
-    val absPath = path.normalize().nn.toAbsolutePath.nn
+    val absPath = path.normalize().toAbsolutePath
     trustedLocations.exists(dir => absPath.startsWith(dir))
   }
 
-  private val scheduledExecutor = Executors.newSingleThreadScheduledExecutor().nn
+  private val scheduledExecutor = Executors.newSingleThreadScheduledExecutor()
 
   def usingWithTimeout[R : Releasable, A](resource: R, duration: Duration)(body: R => A) : A = {
     scheduledExecutor.schedule((() => implicitly[Releasable[R]].release(resource)) : Runnable,

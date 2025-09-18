@@ -37,8 +37,8 @@ sealed class FileItem protected (val parent: Item, path: Path) extends ChildItem
 
     if (folder) {
       try
-        val files = Utils.usingWithTimeout(Files.list(path).nn, Duration("60s")) {
-          _.nn.toScala(List)
+        val files = Utils.usingWithTimeout(Files.list(path), Duration("60s")) {
+          _.toScala(List)
         }
         for (file <- files)
           yield new FileItem(this, file)
@@ -67,11 +67,11 @@ object FileItem {
   /** Create a [[FileItem]] from a [[Path]]. */
   def apply(parent: Item, path: Path): FileItem = new FileItem(parent, path)
   /** Create a [[FileItem]] from a path string */
-  def apply(parent: Item, path: String): FileItem = apply(parent, Path.of(path).nn)
+  def apply(parent: Item, path: String): FileItem = apply(parent, Path.of(path))
   private[items] val fileIcon = SVGImage.fromResource("/icons/file-svgrepo-com.svg")
   private[items] val folderIcon = SVGImage.fromResource("/icons/file-part-2-svgrepo-com.svg")
 
   private def mtimeOf(path: Path): Long =
-    try Files.getLastModifiedTime(path).nn.toMillis
+    try Files.getLastModifiedTime(path).toMillis
     catch case _ => -1
 }

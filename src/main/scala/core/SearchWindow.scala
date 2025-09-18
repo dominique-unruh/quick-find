@@ -48,10 +48,10 @@ class SearchWindow(root: Item) extends JFrame {
   }
 
   private def filter(): Unit = {
-    val search = input.getText.nn.toLowerCase
+    val search = input.getText.toLowerCase
     val iterator =
       for (child <- getChildren(currentFolder).iterator;
-           if child.title.toLowerCase.nn.indexOf(search) != -1)
+           if child.title.toLowerCase.indexOf(search) != -1)
         yield child
     results.setGenerator(iterator)
   }
@@ -62,7 +62,7 @@ class SearchWindow(root: Item) extends JFrame {
     val index = results.selected
     val item = results(index)
     if (item.isFolder)
-      pushFolder(input.getText.nn, index, item)
+      pushFolder(input.getText, index, item)
   }
 
   private def pushFolder(searchString: String, index: Int, folder: Item): Unit =
@@ -103,7 +103,7 @@ class SearchWindow(root: Item) extends JFrame {
     results.selectRelative(-10)
 
   private def escPressed(): Unit = {
-    if (searchStack.isEmpty && input.getText.nn.isEmpty)
+    if (searchStack.isEmpty && input.getText.isEmpty)
       close()
     else if (searchStack.isEmpty)
       input.setText("")
@@ -126,23 +126,23 @@ class SearchWindow(root: Item) extends JFrame {
   private def initialize(): Unit = {
     setTitle("Quick Find")
     val panel = new JPanel()
-    val box = Box.createHorizontalBox().nn
+    val box = Box.createHorizontalBox()
     panel.setLayout(new BorderLayout())
     box.add(prefix)
     box.add(input)
     panel.add(box, BorderLayout.NORTH)
     panel.add(results, BorderLayout.CENTER)
-    input.getDocument.nn.addDocumentListener(new DocumentListener {
+    input.getDocument.addDocumentListener(new DocumentListener {
       override def insertUpdate(documentEvent: DocumentEvent): Unit = filter()
       override def removeUpdate(documentEvent: DocumentEvent): Unit = filter()
       override def changedUpdate(documentEvent: DocumentEvent): Unit = filter()
     })
-    input.setFont(input.getFont.nn.deriveFont(Constants.fontSize.toFloat))
-    prefix.setFont(prefix.getFont.nn.deriveFont(Constants.fontSize.toFloat))
+    input.setFont(input.getFont.deriveFont(Constants.fontSize.toFloat))
+    prefix.setFont(prefix.getFont.deriveFont(Constants.fontSize.toFloat))
     add(panel)
-    KeyboardFocusManager.getCurrentKeyboardFocusManager.nn.addKeyEventDispatcher((event: KeyEvent | Null) => event.nn.getID match
-      case KeyEvent.KEY_PRESSED => event.nn.getKeyCode match
-        case KeyEvent.VK_TAB if event.nn.isShiftDown => shiftTabPressed(); true
+    KeyboardFocusManager.getCurrentKeyboardFocusManager.addKeyEventDispatcher((event: KeyEvent) => event.getID match
+      case KeyEvent.KEY_PRESSED => event.getKeyCode match
+        case KeyEvent.VK_TAB if event.isShiftDown => shiftTabPressed(); true
         case KeyEvent.VK_TAB => tabPressed(); true
         case KeyEvent.VK_ESCAPE => escPressed(); true
         case KeyEvent.VK_DOWN => downPressed(); true
@@ -150,12 +150,12 @@ class SearchWindow(root: Item) extends JFrame {
         case KeyEvent.VK_PAGE_UP => pageUpPressed(); true
         case KeyEvent.VK_PAGE_DOWN => pageDownPressed(); true
         case KeyEvent.VK_ENTER => enterPressed(); true
-        case KeyEvent.VK_W if event.nn.isControlDown => close(); true
-        case KeyEvent.VK_Q if event.nn.isControlDown => close(); true
+        case KeyEvent.VK_W if event.isControlDown => close(); true
+        case KeyEvent.VK_Q if event.isControlDown => close(); true
         case _ => false
       case _ => false)
     setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE)
-    val screenWidth = Toolkit.getDefaultToolkit.nn.getScreenSize.nn.width
+    val screenWidth = Toolkit.getDefaultToolkit.getScreenSize.width
     setSize(screenWidth / 2, screenWidth / 4)
     setLocationRelativeTo(null)
     setUndecorated(true)

@@ -17,23 +17,23 @@ import scala.util.boundary.break
 import scala.jdk.CollectionConverters.*
 
 object ParseText {
-  private val linkExtractor = LinkExtractor.builder().nn
-    .linkTypes(util.EnumSet.of(LinkType.URL, LinkType.EMAIL)).nn
-    .build().nn
+  private val linkExtractor = LinkExtractor.builder()
+    .linkTypes(util.EnumSet.of(LinkType.URL, LinkType.EMAIL))
+    .build()
 
   private def parseLineLinkExtractor(parent: Item, line: String, items: VectorBuilder[ChildItem]): Unit = {
-    val links = linkExtractor.extractLinks(line).nn
+    val links = linkExtractor.extractLinks(line)
     for (link <- links.asScala) boundary {
-      val prefix = line.substring(0, link.getBeginIndex).nn
-      val linkText = line.substring(link.getBeginIndex, link.getEndIndex).nn
-      val suffix = line.substring(link.getEndIndex).nn
+      val prefix = line.substring(0, link.getBeginIndex)
+      val linkText = line.substring(link.getBeginIndex, link.getEndIndex)
+      val suffix = line.substring(link.getEndIndex)
 //      if (seen contains linkText)
 //        break()
 //      seen.add(linkText)
       link.getType match
         case LinkType.URL =>
           val uri = URI(linkText)
-          items += new Link(parent = parent, url = uri.toURL.nn, preview = Some((prefix, linkText, suffix)))
+          items += new Link(parent = parent, url = uri.toURL, preview = Some((prefix, linkText, suffix)))
         case LinkType.EMAIL =>
           if (Email.isMessageId(linkText))
             items += new MessageId(parent = parent, address = linkText, preview = Some((prefix, linkText, suffix)))
@@ -60,17 +60,17 @@ object ParseText {
         else {
           val index = linkText.indexOf(':')
           if (index == -1) break()
-          (linkText.substring(0, index).nn, linkText.substring(index + 1).nn)
+          (linkText.substring(0, index), linkText.substring(index + 1))
         }
 
       lazy val (prefix, suffix) =
-        (line.substring(0, m.start).nn, line.substring(m.end).nn)
+        (line.substring(0, m.start), line.substring(m.end))
 
 //      println(("*****", typ, linkBody))
 
       typ match
         case "file" =>
-          val filePath = path.getParent.nn.resolve(linkBody).nn.normalize.nn
+          val filePath = path.getParent.resolve(linkBody).normalize
           if (!Files.exists(filePath)) break()
           if (!Files.isRegularFile(filePath, LinkOption.NOFOLLOW_LINKS)
             && !Utils.trustedLocation(path))

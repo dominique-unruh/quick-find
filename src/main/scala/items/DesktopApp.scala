@@ -30,7 +30,7 @@ class DesktopAppItem(val parent: Item, app: DesktopApp) extends ChildItem {
   override def isFolder: Boolean = false
   override def icon: ScalableImage = {
     def default = SVGImage.fromResource("/icons/execute-svgrepo-com.svg")
-    lazy val path = Path.of(s"/usr/share/icons/hicolor/scalable/apps/${app.icon}.svg").nn
+    lazy val path = Path.of(s"/usr/share/icons/hicolor/scalable/apps/${app.icon}.svg")
     if (app.icon.isEmpty) default
     else if (!Files.exists(path)) default
     else SVGImage(path)
@@ -53,11 +53,11 @@ object DesktopApp {
   val desktopDirs = List(
     "/usr/share/applications/",
     "/usr/local/share/applications/",
-    System.getProperty("user.home").nn + "/.local/share/applications/"
+    System.getProperty("user.home") + "/.local/share/applications/"
   )
 
   def parseDesktopFile(file: Path): Option[DesktopApp] = {
-    val source = Source.fromFile(file.toFile.nn)
+    val source = Source.fromFile(file.toFile)
     val lines = source.getLines().toList
     source.close()
 
@@ -71,17 +71,17 @@ object DesktopApp {
     var inDesktopEntry = false
 
     for (line <- lines) {
-      val trimmed = line.trim.nn
+      val trimmed = line.trim
 
       if (trimmed == "[Desktop Entry]") {
         inDesktopEntry = true
       } else if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
         inDesktopEntry = false
       } else if (inDesktopEntry && trimmed.contains("=")) {
-        val parts = trimmed.split("=", 2).nn
+        val parts = trimmed.split("=", 2)
         if (parts.length == 2) {
-          val key = parts(0).nn.trim.nn
-          val value = parts(1).nn.trim.nn
+          val key = parts(0).trim
+          val value = parts(1).trim
 
           key match {
             case "Name" if name.isEmpty => name = value
@@ -113,11 +113,11 @@ object DesktopApp {
     for (dir <- desktopDirs) {
       val dirFile = new File(dir)
       if (dirFile.exists() && dirFile.isDirectory) {
-        val desktopFiles = dirFile.listFiles().nn.map(_.nn)
-          .filter(_.getName.nn.endsWith(".desktop"))
+        val desktopFiles = dirFile.listFiles()
+          .filter(_.getName.endsWith(".desktop"))
 
         for (file <- desktopFiles) {
-          parseDesktopFile(file.toPath.nn) match {
+          parseDesktopFile(file.toPath) match {
             case Some(app) if !seenNames.contains(app.name) =>
               apps += app
               seenNames += app.name
@@ -127,13 +127,14 @@ object DesktopApp {
       }
     }
 
-    apps.result().sortBy(_.name.toLowerCase.nn)
+    apps.result().sortBy(_.name.toLowerCase)
   }
 
 
   def sanitizeExecCommand(exec: String): String = {
     // Remove field codes like %f, %F, %u, %U, %i, %c, %k
-    exec.replaceAll("%[fFuUick]", "").nn.trim.nn
+    // AI generated. I thought they have #&%! filters...
+    exec.replaceAll("%[fFuUick]", "").trim
   }
 
   def launchApp(app: DesktopApp): Unit = {

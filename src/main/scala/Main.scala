@@ -9,11 +9,11 @@ object Main {
   def main(args: Array[String]): Unit = {
     Thread.setDefaultUncaughtExceptionHandler { (thread, throwable) =>
       println(s"Uncaught exception (in $thread): $throwable")
-      throwable.nn.printStackTrace()
+      throwable.printStackTrace()
     }
 
     println("Scanning")
-    val root: OrgRoot = OrgRoot(Path.of("/home/unruh/r/home/misc/quick-find-menu.org").nn)
+    val root: OrgRoot = OrgRoot(Path.of("/home/unruh/r/home/misc/quick-find-menu.org"))
     println("Done")
 //    for (path <- root.recursiveIterable)
 //      println(path)

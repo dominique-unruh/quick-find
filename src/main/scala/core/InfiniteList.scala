@@ -37,7 +37,7 @@ class InfiniteList[A <: AnyRef](initialRenderer: ListCellRenderer[_ >: A], loadi
     var count = 0
     try {
       while (generator.hasNext) {
-        val targetLength = targetQueue.take().nn
+        val targetLength = targetQueue.take()
 //        println(s"Pulling till $targetLength")
         while (count < targetLength && generator.hasNext) {
           if (Thread.interrupted) throw InterruptedException()
@@ -60,14 +60,14 @@ class InfiniteList[A <: AnyRef](initialRenderer: ListCellRenderer[_ >: A], loadi
 //    model.addElement(element)
     setSelection(intendedSelection)
     SwingUtilities.invokeLater { () =>
-      val bar = getVerticalScrollBar.nn
+      val bar = getVerticalScrollBar
       if bar.getMaximum == bar.getValue + bar.getVisibleAmount then
         reachedBottom()
     }
   }
 
   private def reachedBottom(): Unit =
-    targetLengthQueue.put(list.getModel.nn.getSize + 20)
+    targetLengthQueue.put(list.getModel.getSize + 20)
 
 /*
   private object listCellRenderer extends DefaultListCellRenderer {
@@ -88,12 +88,12 @@ class InfiniteList[A <: AnyRef](initialRenderer: ListCellRenderer[_ >: A], loadi
   private def initialize(): Unit = {
     list.setCellRenderer(initialRenderer)
 
-    getViewport.nn.add(list)
+    getViewport.add(list)
 
     // Add scroll listener to load more items when reaching the bottom
-    getVerticalScrollBar.nn.addAdjustmentListener(new AdjustmentListener() {
+    getVerticalScrollBar.addAdjustmentListener(new AdjustmentListener() {
       override def adjustmentValueChanged(e: AdjustmentEvent): Unit = {
-        if (!e.getValueIsAdjusting && e.getAdjustable.nn.getMaximum == e.getValue + e.getAdjustable.nn.getVisibleAmount)
+        if (!e.getValueIsAdjusting && e.getAdjustable.getMaximum == e.getValue + e.getAdjustable.getVisibleAmount)
           SwingUtilities.invokeLater(() => reachedBottom())
       }
     })
@@ -105,7 +105,7 @@ class InfiniteList[A <: AnyRef](initialRenderer: ListCellRenderer[_ >: A], loadi
    * The list makes sure that there always is a selected item,
    * unless it's empty (in which case -1 is returned). */
   def selected: Int = list.getSelectedIndex match
-    case -1 => if (list.getModel.nn.getSize > 0) 0 else -1
+    case -1 => if (list.getModel.getSize > 0) 0 else -1
     case index => index
 
   /** Returns the selected item.
@@ -128,7 +128,7 @@ class InfiniteList[A <: AnyRef](initialRenderer: ListCellRenderer[_ >: A], loadi
 
   /** Returns the `index`-th element of the list. */
   def apply(index: Int): A = {
-    val item = list.getModel.nn.getElementAt(index).nn
+    val item = list.getModel.getElementAt(index)
     if (item eq loadingItem) throw new NoSuchElementException
     item
   }
@@ -136,8 +136,8 @@ class InfiniteList[A <: AnyRef](initialRenderer: ListCellRenderer[_ >: A], loadi
   private def setSelection(index: Int): Unit = {
     if (index < 0)
       list.setSelectedIndex(0)
-    else if (index >= list.getModel.nn.getSize)
-      list.setSelectedIndex(list.getModel.nn.getSize - 1)
+    else if (index >= list.getModel.getSize)
+      list.setSelectedIndex(list.getModel.getSize - 1)
     else
       list.setSelectedIndex(index)
     ensureSelectionVisible()
