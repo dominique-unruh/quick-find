@@ -1,9 +1,10 @@
 package de.unruh.quickfind
 package core
 
-import de.unruh.quickfind.core.Item.countCreations
+import de.unruh.quickfind.core.Item.{countCreations, tableName}
 import de.unruh.quickfind.items.{OrgFile, OrgHeading}
 
+import java.nio.ByteBuffer
 import java.nio.file.{Files, Path}
 import java.util.concurrent.atomic.AtomicInteger
 import scala.collection.mutable
@@ -43,8 +44,9 @@ trait Item {
   def weightAdjustment: Double = {
     if (_weightAdjustment == Double.MinValue) synchronized {
       if (_weightAdjustment == Double.MinValue) {
-        // TODO load from cache
-        _weightAdjustment = 0
+        Persistence.get(tableName, this.getClass, this.persistentKey) match
+          case None => _weightAdjustment = 0
+          case Some(encodedWeight) => _weightAdjustment = ByteBuffer.wrap(encodedWeight).getDouble()
       }
     }
     _weightAdjustment
@@ -54,7 +56,8 @@ trait Item {
     val old = _weightAdjustment
     _weightAdjustment = f(_weightAdjustment)
     println(s"Adjusted weight of $this: $old -> $_weightAdjustment")
-    // TODO save in cache
+    val encodedWeight = ByteBuffer.allocate(8).putDouble(_weightAdjustment).array()
+    Persistence.put(tableName, this.getClass, this.persistentKey, encodedWeight)
   }
 
   def prefer(): Unit = updateWeight(d => d - 0.1 / Math.ceil(Math.max(1, -d)))
@@ -87,6 +90,8 @@ object Item {
     if (c % 10000 == 0)
       println(s"Count: $c")
   }
+
+  private val tableName = "weight".getBytes
 }
 
 trait ChildItem extends Item {

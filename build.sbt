@@ -20,7 +20,7 @@ lazy val root = (project in file("."))
       "org.apache.commons" % "commons-text" % "1.11.0",
       "org.nibor.autolink" % "autolink" % "0.11.0",
       "nz.ac.waikato.cms.weka" % "weka-stable" % "3.8.6",
-      "org.rocksdb" % "rocksdbjni" % "10.4.2",
+      "org.rocksdb" % "rocksdbjni" % "10.2.1",
     )
   )
 
