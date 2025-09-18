@@ -31,7 +31,7 @@ class OrgFile(val parent: Item, val path: Path) extends ChildItem {
     else
       content.view.take(headings.head.firstLine - 1)
   override def previewLine: String = if (preamble.nonEmpty) preamble(0) else ""
-  override val persistentKey: String = path.toString
+  override val persistentKey: Array[Byte] = path.toString.getBytes
 }
 
 object OrgFile {
@@ -103,7 +103,7 @@ class OrgHeading private[items] (val parent: Item, path: Path, val firstLine: In
                                  subheadings: Seq[OrgHeading], fileContent: IndexedSeq[String]) extends ChildItem {
   override val children: Iterable[ChildItem] =
     ParseText.parseText(this, path, preamble) ++ subheadings
-  override val persistentKey: String = path.toString + ":" + title
+  override val persistentKey: Array[Byte] = (path.toString + ":" + title).getBytes
 
   def content: IndexedSeqView[String] = fileContent.view.slice(firstLine - 1, lastLine)
 

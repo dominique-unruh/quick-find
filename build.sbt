@@ -9,7 +9,7 @@ ThisBuild / scalaVersion := "3.7.3"
 lazy val root = (project in file("."))
   .settings(
     name := "quickfind",
-    scalacOptions += "-Yexplicit-nulls",
+    scalacOptions ++= "-Yexplicit-nulls -deprecation".split(' ').toSeq,
     idePackagePrefix := Some("de.unruh.quickfind"),
     Compile / mainClass := Some("de.unruh.quickfind.Main"),
     Compile / discoveredMainClasses := Seq(),

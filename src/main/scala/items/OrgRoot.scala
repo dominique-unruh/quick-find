@@ -26,5 +26,5 @@ class OrgRoot(val path: Path) extends Item {
     else
       content.view.take(headings.head.firstLine - 1)
   override def previewLine: String = if (preamble.nonEmpty) preamble(0) else ""
-  override val persistentKey: String = path.toString
+  override val persistentKey: Array[Byte] = path.toString.getBytes
 }

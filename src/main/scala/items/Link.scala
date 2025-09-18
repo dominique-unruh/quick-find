@@ -14,7 +14,7 @@ class Link(val parent: Item, url: URL, preview: Option[(String,String,String)])
 
   override def toString: String = s"[Link $url]"
 
-  override val persistentKey: String = url.toString
+  override val persistentKey: Array[Byte] = url.toString.getBytes
 }
 
 object Link {

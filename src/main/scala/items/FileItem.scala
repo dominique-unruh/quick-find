@@ -18,7 +18,7 @@ sealed class FileItem protected (val parent: Item, path: Path) extends ChildItem
   if (Item.getCount % 10000 == 0)
     println(path)
 
-  override val persistentKey: String = path.toString
+  override val persistentKey: Array[Byte] = path.toString.getBytes
 
   /** The file name part of the path */
   override val title: String =

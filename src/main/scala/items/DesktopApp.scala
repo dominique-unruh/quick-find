@@ -36,7 +36,7 @@ class DesktopAppItem(val parent: Item, app: DesktopApp) extends ChildItem {
     else SVGImage(path)
   }
 
-  override val persistentKey: String = app.toString
+  override val persistentKey: Array[Byte] = app.toString.getBytes
 }
 
 class DesktopAppCollection(val parent: Item) extends ChildItem {
@@ -46,7 +46,7 @@ class DesktopAppCollection(val parent: Item) extends ChildItem {
   override def previewLine: String = ""
   override def icon: ScalableImage = SVGImage.fromResource("/icons/execute-svgrepo-com.svg")
 
-  override val persistentKey: String = "DesktopAppCollection"
+  override val persistentKey: Array[Byte] = Array.empty
 }
 
 object DesktopApp {

@@ -9,7 +9,7 @@ import java.awt.event.KeyEvent
 import java.util
 import javax.swing.{Box, JFrame, JLabel, JPanel, JTextField, WindowConstants}
 import javax.swing.event.{DocumentEvent, DocumentListener}
-import scala.collection.JavaConverters.mapAsScalaMapConverter
+import scala.jdk.CollectionConverters.given
 import scala.collection.mutable
 import scala.ref.WeakReference
 
@@ -61,8 +61,10 @@ class SearchWindow(root: Item) extends JFrame {
   private def tabPressed(): Unit = {
     val index = results.selected
     val item = results(index)
-    if (item.isFolder)
+    if (item.isFolder) {
+      item.prefer()
       pushFolder(input.getText, index, item)
+    }
   }
 
   private def pushFolder(searchString: String, index: Int, folder: Item): Unit =
@@ -116,6 +118,7 @@ class SearchWindow(root: Item) extends JFrame {
     val item = results.selectedItem
     // If we close() after the defaultAction, then showInEmacs does not raise the Emacs frame, maybe due to some race condition with focus change?
     close()
+    item.prefer()
     item.defaultAction()
   } catch
     case _: NoSuchElementException =>
@@ -183,7 +186,7 @@ object SearchWindow {
     override val previewLine = ""
     override val title = "Loading..."
     override val icon: ScalableImage = Item.defaultIcon
-    override val persistentKey: String = "LOADING ITEM"
+    override val persistentKey: Array[Byte] = Array.empty
   }
 
 //  private val loadingItemPath = ItemPath(loadingItem)

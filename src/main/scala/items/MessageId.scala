@@ -13,7 +13,7 @@ class MessageId(val parent: Item, address: String, preview: Option[(String, Stri
     println(s"Running: ${command.mkString(" ")}")
     command.run()
 
-  override val persistentKey: String = address
+  override val persistentKey: Array[Byte] = address.getBytes
 }
 
 object MessageId {

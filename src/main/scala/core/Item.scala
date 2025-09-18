@@ -39,9 +39,31 @@ trait Item {
   //noinspection ScalaWeakerAccess
   def selfWeight: Double = 1
 
-  def weight: Double = parentOption match {
-    case Some(parent) => selfWeight + parent.weight
-    case None => selfWeight
+  private var _weightAdjustment: Double = Double.MinValue
+  def weightAdjustment: Double = {
+    if (_weightAdjustment == Double.MinValue) synchronized {
+      if (_weightAdjustment == Double.MinValue) {
+        // TODO load from cache
+        _weightAdjustment = 0
+      }
+    }
+    _weightAdjustment
+  }
+
+  def updateWeight(f: Double => Double): Unit = synchronized {
+    val old = _weightAdjustment
+    _weightAdjustment = f(_weightAdjustment)
+    println(s"Adjusted weight of $this: $old -> $_weightAdjustment")
+    // TODO save in cache
+  }
+
+  def prefer(): Unit = updateWeight(d => d - 0.1 / Math.ceil(Math.max(1, -d)))
+
+  def weight: Double = {
+    var weight = selfWeight
+    for (parent <- parentOption) weight += parent.weight
+    weight += weightAdjustment
+    weight
   }
 
   /** Icon for this image. */
@@ -53,7 +75,7 @@ trait Item {
       child.addChildren(builder)
   }
 
-  val persistentKey: String
+  val persistentKey: Array[Byte]
 }
 
 object Item {

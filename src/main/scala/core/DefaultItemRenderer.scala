@@ -83,7 +83,7 @@ class DefaultItemRenderer(rootItem: Item, loadingItem: Item) extends ListCellRen
   private def nonEmtpyString(string: String) =
     if (string.isEmpty) " " else string
 
-  override def getListCellRendererComponent(list: JList[_ <: Item], item: Item, index: Int, isSelected: Boolean, cellHasFocus: Boolean): Component =
+  override def getListCellRendererComponent(list: JList[? <: Item], item: Item, index: Int, isSelected: Boolean, cellHasFocus: Boolean): Component =
     if (item eq loadingItem)
       loadingComponent
     else {

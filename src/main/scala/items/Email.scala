@@ -21,7 +21,7 @@ class Email(val parent: Item, address: String, preview: Option[(String,String,St
 
   override def icon: ScalableImage = Email.icon
 
-  override val persistentKey: String = address
+  override val persistentKey: Array[Byte] = address.getBytes
 }
 
 object Email {

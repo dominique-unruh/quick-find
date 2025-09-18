@@ -7,7 +7,7 @@ import ShellCommand.*
 
 class ShellCommand(val parent: Item, command: String, trust: trusted.type, preview: Option[(String,String,String)])
   extends LeafItem, SnippetPreviewItem(preview) {
-  override val persistentKey: String = command
+  override val persistentKey: Array[Byte] = command.getBytes
   override def title: String = s"Run: $command"
   override def toString: String = s"[Shell $command]"
 

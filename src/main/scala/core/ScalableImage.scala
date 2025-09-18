@@ -9,6 +9,7 @@ import java.awt.image.BufferedImage
 import java.io.{File, FileInputStream, FileReader, InputStream, InputStreamReader, Reader}
 import java.net.URL
 import java.nio.file.Path
+import scala.compiletime.uninitialized
 
 trait ScalableImage {
   def getImageAtSize(width: Int, height: Int): Image
@@ -24,7 +25,7 @@ object DummyImage extends ScalableImage {
 class SVGImage private (name: String, source: () => InputStream) extends ScalableImage {
   private var height: Int = -1
   private var width: Int = -1
-  private var image: BufferedImage = _
+  private var image: BufferedImage = uninitialized
 
   override def toString: String = s"[Image $name]"
 
