@@ -41,7 +41,7 @@ class SearchWindow(root: Item) extends JFrame {
             val sortedSeq = seq.sortBy(_.weight)
             // TODO Using WeakReferences probably rebuilds root too often
             recursiveChildrenCache.put(folder, WeakReference(sortedSeq))
-            seq
+            sortedSeq
         }
       }
     }
