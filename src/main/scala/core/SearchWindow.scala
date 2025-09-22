@@ -7,23 +7,31 @@ import SearchWindow.*
 import java.awt.{BorderLayout, KeyboardFocusManager, Toolkit}
 import java.awt.event.KeyEvent
 import java.util
-import javax.swing.{Box, JFrame, JLabel, JPanel, JTextField, WindowConstants}
+import javax.swing.{Box, JFrame, JLabel, JPanel, JTextField, SwingUtilities, WindowConstants}
 import javax.swing.event.{DocumentEvent, DocumentListener}
 import scala.jdk.CollectionConverters.given
 import scala.collection.mutable
 import scala.ref.WeakReference
 
 /** The main window of the app. */
-class SearchWindow(root: Item) extends JFrame {
-  assert(root.isFolder)
+class SearchWindow(loadRoot: () => Item) extends JFrame {
   private val prefix = new JLabel()
   private val input = new JTextField()
+  private var root = loadRoot()
+  assert(root.isFolder)
   private val results = new InfiniteList[Item](DefaultItemRenderer(root, loadingItem), loadingItem)
   private final case class SearchIndexFolder(searchString: String, index: Int, folder: Item)
   private val searchStack = mutable.Stack[SearchIndexFolder]()
   private val recursiveChildrenCache =
     new util.IdentityHashMap[Item, WeakReference[Iterable[Item]]].asScala
   initialize()
+
+  def reloadRoot(): Unit = synchronized {
+    println("Reload root")
+    root = loadRoot()
+    searchStack.clear()
+    updatePrefix()
+  }
 
   private def getChildren(folder: Item): Iterable[Item] = {
     def getValue = recursiveChildrenCache.get(folder).flatMap(_.get)
@@ -118,8 +126,10 @@ class SearchWindow(root: Item) extends JFrame {
     val item = results.selectedItem
     // If we close() after the defaultAction, then showInEmacs does not raise the Emacs frame, maybe due to some race condition with focus change?
     close()
-    item.prefer()
-    item.defaultAction()
+    SwingUtilities.invokeLater { () =>
+      item.prefer()
+      item.defaultAction()
+    }
   } catch
     case _: NoSuchElementException =>
 

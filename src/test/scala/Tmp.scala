@@ -1,15 +1,34 @@
 package de.unruh.quickfind
 
-import items.DesktopApp
+import items.{DesktopApp, DirectItem, ShellCommand}
+
+import de.unruh.quickfind.core.{ChildItem, Item, ScalableImage}
 
 
 object Tmp {
   def main(args: Array[String]): Unit = {
-    val s: String | Null = "hello"
-    var t: String = ""
-//    if (s == null) { ??? : Nothing }
-//    t = s
-    val q: Array[String | Null] = t.split(" ")
+    val root = new Item {
+      override val parentOption: Option[Item] = None
+
+      override def title: String = "fakeroot"
+
+      /** Default action that will be taken when user presses enter. */
+      override def defaultAction(): Unit = {}
+
+      /** A single line preview of the item's content */
+      override def previewLine: String = "fakeroot"
+
+      /** The children directly contained in this item.
+       * Shall return the same children upon each invocation (e.g., `lazy val`). */
+      override val children: Iterable[ChildItem] = Seq.empty
+
+      /** Icon for this image. */
+      override def icon: ScalableImage = Item.defaultIcon
+
+      override val persistentKey: Array[Byte] = Array.empty
+    }
+    val item = DirectItem.instantiate(root, "de.unruh.quickfind.ReloadQuickfind", ShellCommand.trusted)
+    println(item)
   }
 }
 

@@ -22,8 +22,7 @@ trait Item {
   /** A single line preview of the item's content */
   def previewLine: String
 
-  /** The children directly contained in this item.
-   * Shall return the same children upon each invocation (e.g., `lazy val`). */
+  /** The children directly contained in this item. */
   val children: Iterable[ChildItem]
   /** Indicates whether this is a folder.
    * If it has nonempty [[children]], this must return true.

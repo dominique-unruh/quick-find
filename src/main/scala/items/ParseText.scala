@@ -83,8 +83,11 @@ object ParseText {
           if (!Utils.trustedLocation(path)) break()
           items += ShellCommand(parent = parent, command = linkBody, trust=ShellCommand.trusted,
             preview = Some((prefix, linkBody, suffix)))
-        case "desktopapps" =>
+        case "desktopapps" => // TODO could be done as a DirectItem
           items += DesktopAppCollection(parent)
+        case "item" => // direct item
+          if (!Utils.trustedLocation(path)) break()
+          items += DirectItem.instantiate(parent = parent, clazz = linkBody, trust=ShellCommand.trusted)
         case _ =>
     }
   }
