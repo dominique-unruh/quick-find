@@ -1,6 +1,6 @@
 package de.unruh.quickfind
 
-import core.{ActivationHandler, ChildItem, Item, ScalableImage, SearchWindow}
+import core.{ActivationHandler, ChildItem, Item, Persistence, ScalableImage, SearchWindow, SingletonApplication}
 import items.{DirectItem, OrgFile, OrgRoot}
 
 import java.nio.file.Path
@@ -14,6 +14,11 @@ object Main {
       println(s"Uncaught exception (in $thread): $throwable")
       throwable.printStackTrace()
     }
+
+    val singleton = SingletonApplication("quickfind", Persistence.quickfindDir)
+    singleton.ensureSingleInstance()
+
+    Persistence.ensureAvailable()
 
     def loadRoot(): OrgRoot = OrgRoot(Path.of("/home/unruh/r/home/misc/quick-find-menu.org"))
     ui = new SearchWindow(loadRoot)
