@@ -15,8 +15,8 @@ import scala.util.Using
 
 /** An item representing a file in the file system. */
 sealed class FileItem protected (val parent: Item, path: Path) extends ChildItem {
-  if (Item.getCount % 10000 == 0)
-    println(path)
+//  if (Item.getCount % 100000 == 0)
+//    println(s"FileItem: $path")
 
   override val persistentKey: Array[Byte] = path.toString.getBytes
 

@@ -86,7 +86,7 @@ object Item {
   def getCount: Int = count.get()
   private [Item] def countCreations(): Unit = {
     val c = count.incrementAndGet()
-    if (c % 10000 == 0)
+    if (c % 100000 == 0)
       println(s"Count: $c")
   }
 
