@@ -11,7 +11,7 @@ import java.nio.file.{Files, Path}
 import scala.collection.IterableOnce
 import scala.concurrent.duration.Duration
 import scala.jdk.StreamConverters.*
-import scala.util.Using
+import scala.util.{Using, boundary}
 
 /** An item representing a file in the file system. */
 sealed class FileItem protected (val parent: Item, path: Path) extends ChildItem {
@@ -32,6 +32,13 @@ sealed class FileItem protected (val parent: Item, path: Path) extends ChildItem
   override def defaultAction(): Unit =
     Utils.showInFileManager(path)
 
+  def ignoredPath(file: Path): Boolean = {
+    if (file.endsWith(".git/objects") && Files.isDirectory(file))
+      println(s"GIT: $file")
+      return true
+    false
+  }
+
   override val children: Iterable[ChildItem] = {
     val folder = Files.isDirectory(path) && !Files.isSymbolicLink(path)
 
@@ -40,7 +47,8 @@ sealed class FileItem protected (val parent: Item, path: Path) extends ChildItem
         val files = Utils.usingWithTimeout(Files.list(path), Duration("60s")) {
           _.toScala(List)
         }
-        for (file <- files)
+        for (file <- files
+             if !ignoredPath(file))
           yield new FileItem(this, file)
       catch
         case _: IOException => Nil
