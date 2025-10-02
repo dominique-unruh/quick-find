@@ -5,7 +5,7 @@ import DefaultItemRenderer.*
 import SearchWindow.*
 
 import java.awt.{BorderLayout, KeyboardFocusManager, Toolkit}
-import java.awt.event.KeyEvent
+import java.awt.event.{KeyEvent, WindowEvent, WindowFocusListener}
 import java.util
 import javax.swing.{Box, JFrame, JLabel, JPanel, JTextField, SwingUtilities, WindowConstants}
 import javax.swing.event.{DocumentEvent, DocumentListener}
@@ -172,6 +172,11 @@ class SearchWindow(loadRoot: () => Item) extends JFrame {
     setSize(screenWidth / 2, screenWidth / 4)
     setLocationRelativeTo(null)
     setUndecorated(true)
+
+    addWindowFocusListener(new WindowFocusListener {
+      override def windowGainedFocus(windowEvent: WindowEvent): Unit = {}
+      override def windowLostFocus(windowEvent: WindowEvent): Unit = close()
+    })
   }
 
   private def close(): Unit = setVisible(false)
