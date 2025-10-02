@@ -59,19 +59,7 @@ class DefaultItemRenderer(rootItem: Item, loadingItem: Item) extends ListCellRen
   }
 
   private def title(item: Item): String = {
-    val path = {
-      val builder = Seq.newBuilder[String]
-      var current = item
-      boundary { while (true) {
-        builder += current.title
-        current.parentOption match {
-          case Some(value) if value eq rootItem => break()
-          case Some(value) => current = value
-          case None => break()
-        }
-      } }
-      builder.result().reverse
-    }
+    val path = item.pathTo(rootItem).map(_.title)
 
     val string = path.mkString(s" ${Constants.separator} ")
     if item.isFolder then
@@ -176,7 +164,7 @@ class MiddleTruncateLabel extends JLabel {
   private def truncateMiddleForWidth(text: String, metrics: FontMetrics, availableWidth: Int): String = {
     if (text.isEmpty) return text
 
-    println((availableWidth, metrics.stringWidth(text)))
+//    println((availableWidth, metrics.stringWidth(text)))
 
     // If width is not available or text fits, return as is
     if (availableWidth <= 0 || metrics.stringWidth(text) <= availableWidth)

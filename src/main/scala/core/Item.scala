@@ -8,14 +8,18 @@ import java.nio.ByteBuffer
 import java.nio.file.{Files, Path}
 import java.util.concurrent.atomic.AtomicInteger
 import scala.collection.mutable
+import scala.util.boundary
+import scala.util.boundary.break
 
 /** An item in the search results. May contain other items. */
 trait Item {
   countCreations()
 
   val parentOption: Option[Item]
+
   /** A descriptive title of the item. Will be used for display and search. */
   def title: String
+
   /** Default action that will be taken when user presses enter. */
   def defaultAction(): Unit
 
@@ -24,6 +28,7 @@ trait Item {
 
   /** The children directly contained in this item. */
   val children: Iterable[ChildItem]
+
   /** Indicates whether this is a folder.
    * If it has nonempty [[children]], this must return true.
    * If it has empty [[children]], it should return false,
@@ -35,11 +40,12 @@ trait Item {
   /** The weight of this item.
    * Contents of item with higher weights will be listed later.
    * (In the final ordering, weights from the parents will be added to this.)
-   **/
+   * */
   //noinspection ScalaWeakerAccess
   def selfWeight: Double = 1
 
   private var _weightAdjustment: Double = Double.MinValue
+
   def weightAdjustment: Double = {
     if (_weightAdjustment == Double.MinValue) synchronized {
       if (_weightAdjustment == Double.MinValue) {
@@ -78,6 +84,22 @@ trait Item {
   }
 
   val persistentKey: Array[Byte]
+
+  def pathTo(root: Item): Seq[Item] = {
+    val builder = Seq.newBuilder[Item]
+    var current = this
+    boundary {
+      while (true) {
+        builder += current
+        current.parentOption match {
+          case Some(value) if value eq root => break()
+          case Some(value) => current = value
+          case None => break()
+        }
+      }
+    }
+    builder.result().reverse
+  }
 }
 
 object Item {

@@ -12,6 +12,7 @@ import javax.swing.event.{DocumentEvent, DocumentListener}
 import scala.jdk.CollectionConverters.given
 import scala.collection.mutable
 import scala.ref.WeakReference
+import scala.util.matching.Regex
 
 /** The main window of the app. */
 class SearchWindow(loadRoot: () => Item) extends JFrame {
@@ -56,11 +57,23 @@ class SearchWindow(loadRoot: () => Item) extends JFrame {
   }
 
   private def filter(): Unit = {
-    val search = input.getText.toLowerCase
+    val searchWords = input.getText.toLowerCase.split(' ')
+    val regexes = for (word <- searchWords;
+                       if word.trim.nonEmpty)
+      yield raw"(?i)\b${Regex.quote(word)}".r.unanchored
+    /** Does the title of this item match at least one search term? */
+    def isTitleMatch(item: Item) = regexes.exists(_.matches(item.title))
+    /** Does the path (incl this) of this item match at least one search term? */
+    def isPathMatch(item: Item) = regexes.forall(regex => item.pathTo(root).exists(parent => regex.matches(parent.title)))
+
+    val allChildren = getChildren(currentFolder).iterator
     val iterator =
-      for (child <- getChildren(currentFolder).iterator;
-           if child.title.toLowerCase.indexOf(search) != -1)
-        yield child
+      if (regexes.isEmpty)
+        allChildren
+      else
+        for (child <- allChildren;
+             if isTitleMatch(child) && isPathMatch(child))
+          yield child
     results.setGenerator(iterator)
   }
 

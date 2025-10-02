@@ -34,7 +34,7 @@ sealed class FileItem protected (val parent: Item, path: Path) extends ChildItem
 
   def ignoredPath(file: Path): Boolean = {
     if (file.endsWith(".git/objects") && Files.isDirectory(file))
-      println(s"GIT: $file")
+//      println(s"GIT: $file")
       return true
     false
   }
