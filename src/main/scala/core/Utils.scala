@@ -4,15 +4,17 @@ package core
 import org.apache.commons.text.StringEscapeUtils
 import org.apache.xmlgraphics.io.Resource
 
+import java.io.{BufferedReader, File, FileReader}
 import java.lang.ref.Cleaner
 import java.net.URL
-import java.nio.file.Path
+import java.nio.file.{Files, Path}
 import java.util.concurrent.{Executors, TimeUnit}
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.duration.Duration
 import scala.io.Source
 import scala.util.Using
 import scala.util.Using.Releasable
+import scala.util.control.NonFatal
 
 object Utils {
   /** Shows `path` in the Thunar file manager. */
@@ -91,5 +93,18 @@ object Utils {
     scheduledExecutor.schedule((() => implicitly[Releasable[R]].release(resource)) : Runnable,
       duration.toMicros, TimeUnit.MICROSECONDS)
     Using.resource(resource)(body)
+  }
+
+  def firstLine(file: File): Option[String] = {
+    val reader = BufferedReader(FileReader(file))
+    try {
+      try {
+        Some(reader.readLine())
+      } catch {
+        case NonFatal(_) => None
+      }
+    } finally {
+      reader.close()
+    }
   }
 }

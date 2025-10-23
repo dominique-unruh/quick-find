@@ -45,9 +45,7 @@ class ReloadQuickfind(val parent: Item) extends DirectItem {
   }
 
   override def previewLine: String = "Scan for changed files in this search app"
-
-  override val children: Iterable[ChildItem] = Iterable.empty
-
+  
   // TODO
   override def icon: ScalableImage = Item.defaultIcon
 

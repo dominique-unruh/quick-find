@@ -8,7 +8,7 @@ import de.unruh.quickfind.items.ShellCommand.trusted
 import java.lang.reflect.Constructor
 
 abstract class DirectItem extends ChildItem {
-
+  override val children: Iterable[ChildItem] = Iterable.empty
 }
 
 object DirectItem {

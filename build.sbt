@@ -21,6 +21,10 @@ lazy val root = (project in file("."))
       "org.nibor.autolink" % "autolink" % "0.11.0",
       "nz.ac.waikato.cms.weka" % "weka-stable" % "3.8.6",
       "org.rocksdb" % "rocksdbjni" % "10.2.1",
+      "javax.mail" % "javax.mail-api" % "1.6.2",
+      "com.sun.mail" % "javax.mail" % "1.6.2",
+      "com.typesafe.scala-logging" %% "scala-logging" % "3.9.6",
+      "ch.qos.logback" % "logback-classic" % "1.5.20",
     )
   )
 
