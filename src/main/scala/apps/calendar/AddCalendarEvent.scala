@@ -22,6 +22,7 @@ import scala.collection.mutable.ArrayBuffer
 import scala.compiletime.uninitialized
 import scala.concurrent.Future
 import scala.io.Source
+import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
 
 // Main Application
@@ -45,14 +46,7 @@ class AddCalendarEvent extends JFrame {
     val toolbar = new JPanel(new FlowLayout(FlowLayout.LEFT))
     val newButton = new JButton("New Event")
     newButton.addActionListener { _ =>
-      val event = CalendarEvent(
-        "",
-        LocalDateTime.now(),
-        LocalDateTime.now().plusHours(1),
-        "",
-        "",
-        "private"
-      )
+      val event = CalendarEvent()
       events += event
       refreshEventsList()
     }
@@ -101,26 +95,35 @@ class AddCalendarEvent extends JFrame {
     }
 
     override def drop(dtde: DropTargetDropEvent): Unit = {
-      dtde.acceptDrop(DnDConstants.ACTION_COPY)
-      val transferable = dtde.getTransferable
+      try {
+        dtde.acceptDrop(DnDConstants.ACTION_COPY)
+        val transferable = dtde.getTransferable
 
-      transferable match {
-        case FileTransferable(file) if Utils.firstLine(file).exists(_.startsWith("BEGIN:VCALENDAR")) =>
-          parseICSFile(file)
-          dtde.dropComplete(true)
-        case FileTransferable(file) if file.getName.toLowerCase.endsWith(".eml") =>
-          parseEmailFile(file)
-          dtde.dropComplete(true)
-        case StringTransferable(content) if content.startsWith("BEGIN:VCALENDAR") =>
-          parseICSContentLegacy(content)
-          dtde.dropComplete(true)
-        case StringTransferable(content) =>
-          parseEmailContent(content)
-          dtde.dropComplete(true)
-        case _ =>
-          showError("Can process this drag and drop object")
-          dtde.dropComplete(false)
-      }
+        transferable match {
+          case FileTransferable(file) if Utils.firstLine(file).exists(_.startsWith("BEGIN:VCALENDAR")) =>
+            events ++= ICS.parseICSFile(file)
+            refreshEventsList()
+            dtde.dropComplete(true)
+          case FileTransferable(file) if file.getName.toLowerCase.endsWith(".eml") =>
+            events ++= Email.parseEmailFile(file)
+            refreshEventsList()
+            dtde.dropComplete(true)
+          case StringTransferable(content) if content.startsWith("BEGIN:VCALENDAR") =>
+            events ++= ICS.parseICSContent(content)
+            refreshEventsList()
+            dtde.dropComplete(true)
+          case StringTransferable(content) =>
+            events ++= Email.parseEmailContent(content)
+            refreshEventsList()
+            dtde.dropComplete(true)
+          case _ =>
+            showError("Can process this drag and drop object")
+            refreshEventsList()
+            dtde.dropComplete(false)
+        }
+      } catch
+        case NonFatal(e) =>
+          showError(s"Failed to parse dropped event: $e")
     }
   }
 
@@ -314,172 +317,8 @@ class AddCalendarEvent extends JFrame {
     panel
   }
 
-  private def parseICSFile(file: File): Unit = {
-    try {
-      val content = Source.fromFile(file, "UTF-8").mkString
-      parseICSContentLegacy(content)
-    } catch {
-      case e: Exception =>
-        showError(s"Error parsing ICS file: ${e.getMessage}")
-    }
-  }
-
-  private def parseICSContentLegacy(content: String): Unit = {
-    for (event <- parseICSContent(content))
-      events += event
-    refreshEventsList()
-  }
-  private def parseICSContent(content: String): Seq[CalendarEvent] = {
-    // TODO This arrives here with additional newline in the calendar entries? Error in Mime-Extraction? Or part of ICS standard?
-    val lines = content.split("\n").map(_.trim)
-    var inEvent = false
-    var currentEvent = Map[String, String]()
-    val events = Seq.newBuilder[CalendarEvent]
-
-    lines.foreach { line =>
-      if (line.startsWith("BEGIN:VEVENT")) {
-        inEvent = true
-        currentEvent = Map[String, String]()
-      } else if (line.startsWith("END:VEVENT") && inEvent) {
-        inEvent = false
-        events ++= createEventFromICS(currentEvent)
-      } else if (inEvent && line.contains(":")) {
-        val parts = line.split(":", 2)
-        if (parts.length == 2) {
-          val key = parts(0).split(";")(0)
-          currentEvent = currentEvent + (key -> parts(1))
-        }
-      }
-    }
-
-    events.result()
-  }
-
-  private def createEventFromICSLegacy(data: Map[String, String]): Unit = {
-    for (event <- createEventFromICS(data))
-      events += event
-  }
-  
-  private def createEventFromICS(data: Map[String, String]): Option[CalendarEvent] = {
-    try {
-      val title = data.getOrElse("SUMMARY", "Untitled Event")
-      val start = parseICSDateTime(data.getOrElse("DTSTART", ""))
-      val end = parseICSDateTime(data.getOrElse("DTEND", ""))
-      val description = data.getOrElse("DESCRIPTION", "").replace("\\n", "\n")
-      val location = data.getOrElse("LOCATION", "")
-
-      if (start.isDefined && end.isDefined) {
-        Some(CalendarEvent(title, start.get, end.get, description, location))
-      } else
-        None
-    } catch {
-      case e: Exception =>
-        showError(s"Error creating event: ${e.getMessage}")
-        None
-    }
-  }
-
-  private def parseICSDateTime(dateStr: String): Option[LocalDateTime] = {
-    Try {
-      if (dateStr.contains("T")) {
-        val cleaned = dateStr.replace("Z", "").replace("-", "").replace(":", "")
-        LocalDateTime.parse(cleaned, DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss"))
-      } else {
-        LocalDateTime.parse(dateStr, DateTimeFormatter.ofPattern("yyyyMMdd")).withHour(9)
-      }
-    }.toOption
-  }
-
-  private def parseEmailFile(file: File): Unit = {
-    try {
-      val session = Session.getDefaultInstance(new Properties())
-      val fis = new FileInputStream(file)
-      val message = new MimeMessage(session, fis)
-      processEmail(message)
-      fis.close()
-    } catch {
-      case e: Exception =>
-        showError(s"Error parsing email file: ${e.getMessage}")
-    }
-  }
-
-  private def parseEmailContent(content: String): Unit = {
-    try {
-      val session = Session.getDefaultInstance(new Properties())
-      val is = new java.io.ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8))
-      val message = new MimeMessage(session, is)
-      processEmail(message)
-      is.close()
-    } catch {
-      case e: Exception =>
-        extractEventWithLLM(content, "Unknown", content)
-    }
-  }
-
-  private def processEmail(message: MimeMessage): Unit = {
-    val icsAttachments = extractICSAttachments(message)
-    val messageId = message.getMessageID.stripPrefix("<").stripSuffix(">")
-
-    if (icsAttachments.nonEmpty) {
-      val descriptionPrefix = s"$messageId\n\n${Email.getEmailBody(message)}\n\n"
-      for (attachment <- icsAttachments)
-        events ++= parseICSContent(attachment).map(_.prefixDescriptionWith(descriptionPrefix))
-      refreshEventsList()
-    } else {
-      val subject = Email.strippedSubject(message)
-      val body = Email.getEmailBody(message)
-      extractEventWithLLM(subject, subject, body)
-    }
-  }
-
-  private def extractICSAttachments(message: MimeMessage): List[String] = {
-    val attachments = ArrayBuffer[String]()
-
-    def processBodyPart(bodyPart: BodyPart): Unit = {
-      val disposition = bodyPart.getDisposition
-      val hasIcsSuffix = Option(bodyPart.getFileName).getOrElse("").toLowerCase.endsWith(".ics")
-      val hasCalendarMimeType = bodyPart.isMimeType("text/calendar")
-      val isCalendarEntry = hasIcsSuffix || hasCalendarMimeType
-
-      if (isCalendarEntry) {
-        val content = Source.fromInputStream(bodyPart.getInputStream).mkString
-        attachments += content
-      }
-    }
-
-    val content = message.getContent
-    content match {
-      case multipart: Multipart =>
-        for (i <- 0 until multipart.getCount) {
-          processBodyPart(multipart.getBodyPart(i))
-        }
-      case _ =>
-    }
-
-    attachments.toList
-  }
-
-  private def extractEventWithLLM(subject: String, title: String, body: String): Unit = {
-    showError(s"LLM extraction needed for: $title\n\nTo complete this feature, integrate with an LLM API (OpenAI, Anthropic, etc.)")
-
-    Future {
-      SwingUtilities.invokeLater { () =>
-        val event = CalendarEvent(
-          title = title,
-          startTime = LocalDateTime.now().plusDays(1).withHour(10).withMinute(0),
-          endTime = LocalDateTime.now().plusDays(1).withHour(11).withMinute(0),
-          description = s"Email body:\n$body",
-          location = "",
-          calendar = "private"
-        )
-        events += event
-        refreshEventsList()
-        showInfo("Created template event. Please review and edit the details.")
-      }
-    }
-  }
-
   private def addToGoogleCalendar(event: CalendarEvent): Unit = {
+    // TODO Use the calender-selection
     try {
       val dateFormat = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss")
       val title = URLEncoder.encode(event.title, "UTF-8")

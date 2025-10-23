@@ -23,11 +23,11 @@ import com.typesafe.scalalogging.Logger
 
 // Calendar Event Model
 case class CalendarEvent(
-                          var title: String,
-                          var startTime: LocalDateTime,
-                          var endTime: LocalDateTime,
-                          var description: String,
-                          var location: String,
+                          var title: String = "",
+                          var startTime: LocalDateTime = LocalDateTime.now().plusDays(1).withHour(10).withMinute(0),
+                          var endTime: LocalDateTime = LocalDateTime.now().plusDays(1).withHour(10).withMinute(0),
+                          var description: String = "",
+                          var location: String =  "",
                           var calendar: String = "private"
                         ) {
   def prefixDescriptionWith(string: String): CalendarEvent =
