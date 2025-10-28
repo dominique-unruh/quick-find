@@ -35,4 +35,6 @@ case class CalendarEvent(
 }
 
 
-
+object CalendarEvent {
+  val calendars: Seq[String] = Seq("private", "work", "family", "other")
+}
