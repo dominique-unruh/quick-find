@@ -6,7 +6,8 @@ import core.Utils
 import com.typesafe.scalalogging.Logger
 
 import java.awt.dnd.{DnDConstants, DropTarget, DropTargetAdapter, DropTargetDragEvent, DropTargetDropEvent}
-import java.awt.{BorderLayout, Color, Component, Dimension, FlowLayout, Font, GridBagConstraints, GridBagLayout, Insets}
+import java.awt.event.KeyEvent
+import java.awt.{BorderLayout, Color, Component, Dimension, FlowLayout, Font, GridBagConstraints, GridBagLayout, Insets, KeyboardFocusManager}
 import java.net.URLEncoder
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -55,11 +56,24 @@ class AddCalendarEvent extends JFrame {
     add(toolbar, BorderLayout.NORTH)
     add(scrollPane, BorderLayout.CENTER)
     setLocationRelativeTo(null)
-    setVisible(true)
 
+    KeyboardFocusManager.getCurrentKeyboardFocusManager.addKeyEventDispatcher((event: KeyEvent) => event.getID match
+      case KeyEvent.KEY_PRESSED => event.getKeyCode match
+//        case KeyEvent.VK_ESCAPE => close(); true
+        case KeyEvent.VK_W if event.isControlDown => close(); true
+        case KeyEvent.VK_Q if event.isControlDown => close(); true
+        case _ => false
+      case _ => false)
+    
     refreshEventsList()
   }
 
+  def close(): Unit = {
+    setVisible(false)
+    events.clear()
+    refreshEventsList()
+  }
+  
   def showApp(): Unit = {
     setVisible(true)
   }

@@ -27,6 +27,7 @@ lazy val root = (project in file("."))
       "ch.qos.logback" % "logback-classic" % "1.5.20",
       "org.scala-lang.modules" %% "scala-swing" % "3.0.0",
       "org.aarboard.nextcloud" % "nextcloud-api" % "14.1.0",
+      "com.lihaoyi" %% "sourcecode" % "0.4.4",
     )
   )
 
