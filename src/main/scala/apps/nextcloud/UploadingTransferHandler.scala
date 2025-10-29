@@ -5,12 +5,14 @@ import apps.calendar.{FileTransferable, ImageTransferable, StringTransferable}
 import apps.nextcloud.UploadingTransferHandler.{defaultStringPaste, logger}
 
 import com.typesafe.scalalogging.Logger
+import de.unruh.quickfind.core.Utils
 
 import java.awt.datatransfer.Transferable
 import java.io.File
 import javax.imageio.ImageIO
 import javax.swing.text.JTextComponent
 import javax.swing.{JComponent, TransferHandler}
+import scala.util.control.NonFatal
 
 class UploadingTransferHandler(errorMessage: String => Unit,
                                infoMessage: String => Unit,
@@ -44,8 +46,15 @@ class UploadingTransferHandler(errorMessage: String => Unit,
 }
 
 object UploadingTransferHandler {
-  def defaultStringPaste(suffix: String = "")(component: JComponent, string: String): Unit =
+  def defaultStringPaste(suffix: String = " ", alsoCopy: Boolean = false)(component: JComponent, string: String): Unit = {
+    if (alsoCopy)
+      try
+        Utils.copyToClipboard(string)
+      catch
+        case NonFatal(e) => e.printStackTrace()
+
     component.asInstanceOf[JTextComponent].replaceSelection(string + suffix)
+  }
 
   private val logger = Logger[UploadingTransferHandler]
 }

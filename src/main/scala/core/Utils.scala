@@ -5,6 +5,8 @@ import org.apache.commons.io.FilenameUtils
 import org.apache.commons.text.StringEscapeUtils
 import org.apache.xmlgraphics.io.Resource
 
+import java.awt.Toolkit
+import java.awt.datatransfer.StringSelection
 import java.io.{BufferedReader, File, FileReader}
 import java.lang.ref.Cleaner
 import java.net.URL
@@ -134,5 +136,10 @@ object Utils {
     }
 
     newPath
+  }
+
+  def copyToClipboard(string: String): Unit = {
+    val selection = StringSelection(string)
+    Toolkit.getDefaultToolkit.getSystemClipboard.setContents(selection, null)
   }
 }
