@@ -1,7 +1,7 @@
 package de.unruh.quickfind
 package apps.calendar
 
-import core.Utils
+import core.{DeferredVal, Utils}
 
 import com.typesafe.scalalogging.Logger
 
@@ -19,9 +19,10 @@ import scala.util.{Failure, Success, Try}
 
 // Main Application
 class AddCalendarEvent extends JFrame {
+  private given DeferredVal.CheckInitManager()
   private val events = ArrayBuffer[CalendarEvent]()
-  private var eventsPanel: JPanel = uninitialized
-  private var scrollPane: JScrollPane = uninitialized
+  private val eventsPanel = DeferredVal[JPanel]
+  private val scrollPane = DeferredVal[JScrollPane]
 
   initialize()
 
@@ -42,11 +43,11 @@ class AddCalendarEvent extends JFrame {
 
     toolbar.add(newButton)
 
-    eventsPanel = new JPanel()
+    eventsPanel := new JPanel()
     eventsPanel.setLayout(new BoxLayout(eventsPanel, BoxLayout.Y_AXIS))
     eventsPanel.setBackground(Color.WHITE)
 
-    scrollPane = new JScrollPane(eventsPanel)
+    scrollPane := new JScrollPane(eventsPanel)
     scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS)
     scrollPane.getVerticalScrollBar.setUnitIncrement(16)
 
@@ -66,6 +67,8 @@ class AddCalendarEvent extends JFrame {
       case _ => false)
     
     refreshEventsList()
+    
+    DeferredVal.assertInitialized()
   }
 
   def close(): Unit = {
