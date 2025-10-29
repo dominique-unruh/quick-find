@@ -1,6 +1,7 @@
 package de.unruh.quickfind
 package core
 
+import org.apache.commons.io.FilenameUtils
 import org.apache.commons.text.StringEscapeUtils
 import org.apache.xmlgraphics.io.Resource
 
@@ -106,5 +107,32 @@ object Utils {
     } finally {
       reader.close()
     }
+  }
+
+  def uniqueFileName(path: java.nio.file.Path): java.nio.file.Path = {
+    if (!Files.exists(path)) {
+      return path
+    }
+
+    val fileName = path.getFileName.toString
+    val parent = path.getParent
+
+    // Split filename and extension
+    val lastDot = fileName.lastIndexOf('.')
+    val (baseName, extension) = if (lastDot > 0) {
+      (fileName.substring(0, lastDot), fileName.substring(lastDot))
+    } else {
+      (fileName, "")
+    }
+
+    // Find unique name
+    var counter = 1
+    var newPath = parent.resolve(s"$baseName-$counter$extension")
+    while (Files.exists(newPath)) {
+      counter += 1
+      newPath = parent.resolve(s"$baseName-$counter$extension")
+    }
+
+    newPath
   }
 }

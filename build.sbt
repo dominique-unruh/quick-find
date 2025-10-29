@@ -25,6 +25,8 @@ lazy val root = (project in file("."))
       "com.sun.mail" % "javax.mail" % "1.6.2",
       "com.typesafe.scala-logging" %% "scala-logging" % "3.9.6",
       "ch.qos.logback" % "logback-classic" % "1.5.20",
+      "org.scala-lang.modules" %% "scala-swing" % "3.0.0",
+      "org.aarboard.nextcloud" % "nextcloud-api" % "14.1.0",
     )
   )
 

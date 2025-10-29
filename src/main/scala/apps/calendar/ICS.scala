@@ -9,11 +9,11 @@ import java.util.Properties
 import javax.mail.Session
 import javax.mail.internet.MimeMessage
 import scala.io.Source
-import scala.util.Try
+import scala.util.{Try, Using}
 
 object ICS {
   def parseICSFile(file: File): Seq[CalendarEvent] = {
-    val content = Source.fromFile(file, "UTF-8").mkString
+    val content = Using.resource(Source.fromFile(file, "UTF-8"))(_.mkString)
     parseICSContent(content)
   }
 
