@@ -3,6 +3,7 @@ package apps.calendar
 
 import com.typesafe.scalalogging.Logger
 import de.unruh.quickfind.apps.calendar.EventEditor.logger
+import de.unruh.quickfind.apps.nextcloud.UploadingTransferHandler
 
 import java.awt.{BorderLayout, Color, Component, Dimension, Font, GridBagConstraints, GridBagLayout, Insets}
 import java.net.URLEncoder
@@ -130,6 +131,10 @@ class EventEditor(event: CalendarEvent,
     descArea.setLineWrap(true)
     descArea.setWrapStyleWord(true)
     descArea.getDocument.addDocumentListener(updateListener)
+    descArea.setTransferHandler(UploadingTransferHandler(
+      errorMessage = showError,
+      infoMessage = showInfo,
+    ))
     val descScroll = new JScrollPane(descArea)
     descScroll.setPreferredSize(new Dimension(400, 50))
 
