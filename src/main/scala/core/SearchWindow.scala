@@ -61,10 +61,11 @@ class SearchWindow(loadRoot: () => Item) extends JFrame {
     val regexes = for (word <- searchWords;
                        if word.trim.nonEmpty)
       yield raw"(?i)\b${Regex.quote(word)}".r.unanchored
+    def isMatch(item: Item, regex: Regex) = regex.matches(item.title) || regex.matches(item.previewLine)
     /** Does the title of this item match at least one search term? */
-    def isTitleMatch(item: Item) = regexes.exists(_.matches(item.title))
+    def isItemMatch(item: Item) = regexes.exists(isMatch(item, _))
     /** Does the path (incl this) of this item match at least one search term? */
-    def isPathMatch(item: Item) = regexes.forall(regex => item.pathTo(root).exists(parent => regex.matches(parent.title)))
+    def isPathMatch(item: Item) = regexes.forall(regex => item.pathTo(root).exists(isMatch(_, regex)))
 
     val allChildren = getChildren(currentFolder).iterator
     val iterator =
@@ -72,7 +73,7 @@ class SearchWindow(loadRoot: () => Item) extends JFrame {
         allChildren
       else
         for (child <- allChildren;
-             if isTitleMatch(child) && isPathMatch(child))
+             if isItemMatch(child) && isPathMatch(child))
           yield child
     results.setGenerator(iterator)
   }
