@@ -65,7 +65,10 @@ trait Item {
     Persistence.put(tableName, this.getClass, this.persistentKey, encodedWeight)
   }
 
-  def prefer(): Unit = updateWeight(d => d - 0.1 / Math.ceil(Math.max(1, -d)))
+  def prefer(factor: Double = 1): Unit =
+    updateWeight(d => d - 0.1 / Math.ceil(Math.max(1, -d)) * factor)
+    for (parent <- parentOption)
+      parent.prefer(factor * 0.3)
 
   def weight: Double = {
     var weight = selfWeight
