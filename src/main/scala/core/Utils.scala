@@ -142,4 +142,12 @@ object Utils {
     val selection = StringSelection(string)
     Toolkit.getDefaultToolkit.getSystemClipboard.setContents(selection, null)
   }
+  
+  /** Truncates the string to a length of `len` if it is longer. */
+  def truncate(string: String, len: Int): String =
+    if (string.length > len)
+      string.substring(0, len)
+    else
+      string
+    
 }

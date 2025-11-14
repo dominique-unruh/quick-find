@@ -120,5 +120,5 @@ object Item {
 
 trait ChildItem extends Item {
   val parent: Item
-  val parentOption = Some(parent)
+  val parentOption: Some[Item] = Some(parent)
 }

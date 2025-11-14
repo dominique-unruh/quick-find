@@ -34,7 +34,9 @@ sealed class FileItem protected (val parent: Item, path: Path) extends ChildItem
 
   def ignoredPath(file: Path): Boolean = {
     if (file.endsWith(".git/objects") && Files.isDirectory(file))
-//      println(s"GIT: $file")
+      //      println(s"GIT: $file")
+      return true
+    if (file.toString == "/home/unruh/.cache")
       return true
     false
   }
@@ -64,7 +66,7 @@ sealed class FileItem protected (val parent: Item, path: Path) extends ChildItem
   override lazy val previewLine: String =
     try
       if (Files.isRegularFile(path) && Files.isReadable(path))
-        Using.resource(Utils.getLines(path)) { _.nextOption.getOrElse("") }
+        Using.resource(Utils.getLines(path)) { line => Utils.truncate(line.nextOption.getOrElse(""), 500) }
       else
         ""
     catch
