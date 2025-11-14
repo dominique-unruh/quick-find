@@ -28,6 +28,7 @@ lazy val root = (project in file("."))
       "org.scala-lang.modules" %% "scala-swing" % "3.0.0",
       "org.aarboard.nextcloud" % "nextcloud-api" % "14.1.0",
       "com.lihaoyi" %% "sourcecode" % "0.4.4",
+      "com.typesafe.play" %% "play-json" % "2.10.8",
     )
   )
 
