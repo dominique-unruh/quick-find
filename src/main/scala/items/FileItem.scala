@@ -16,11 +16,11 @@ import scala.jdk.StreamConverters.*
 import scala.util.{Random, Using, boundary}
 
 /** An item representing a file in the file system. */
-sealed class FileItem protected (val parent: Item, path: Path) extends ChildItem {
+class FileItem protected (val parent: Item, path: Path) extends ChildItem {
   //  if (Item.getCount % 100000 == 0)
   //    println(s"FileItem: $path")
   override val underlyingFile: Option[Path] = Some(path.normalize())
-  
+
   override val persistentKey: Array[Byte] = path.toString.getBytes
 
   /** The file name part of the path */
@@ -89,23 +89,17 @@ object FileItem {
     catch case _ => -1
 
   def fileAsItem(parent: Item, path: Path, trusted: Boolean = false): ChildItem = {
-//    val item =
-      if (!Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS) && !trusted)
-        FileItem(parent, path)
-      else if (path.getFileName.toString.endsWith(".org") && Files.isRegularFile(path))
-        OrgFile(parent, path)
-      else
-        FileItem(parent, path)
-//    if (Random.between(0, 100000) == 0)
-//      println(item.toString)
-//    if (item.isInstanceOf[OrgFile])
-//      println(s"ORG: $item")
-//    if (item.toString.contains("quick-find-menu.org"))
-//      println("XXX")
-//    if (parent.hasAncestor(p => util.Arrays.equals(p.persistentKey, item.persistentKey)))
-//      None
-//    else
-//      Some(item)
+    val isLink = Files.isSymbolicLink(path)
+    val isFile = Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS)
+    val isDir = Files.isDirectory(path, LinkOption.NOFOLLOW_LINKS)
+    val fileName = path.getFileName.toString
+
+    if (fileName.endsWith(".org") && isFile)
+      return OrgFile(parent, path)
+    if (fileName == ".idea" && Files.isDirectory(path))
+      return IntelliJProject(parent, path)
+
+    return FileItem(parent, path)
   }
 
   private val logger = Logger[FileItem]
