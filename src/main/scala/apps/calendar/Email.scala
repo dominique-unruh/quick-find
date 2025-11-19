@@ -1,6 +1,8 @@
 package de.unruh.quickfind
 package apps.calendar
 
+import com.typesafe.scalalogging.Logger
+
 import java.io.{File, FileInputStream}
 import java.nio.charset.StandardCharsets
 import java.util.Properties
@@ -8,6 +10,7 @@ import javax.mail.{BodyPart, Multipart, Session}
 import javax.mail.internet.MimeMessage
 import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
+import scala.util.Try
 
 object Email {
   def strippedSubject(message: MimeMessage): String = {
@@ -20,7 +23,7 @@ object Email {
     subject
   }
 
-  def getEmailBody(message: MimeMessage): String = {
+/*  def getEmailBody(message: MimeMessage): String = {
     val content = message.getContent
     content match {
       case text: String => text
@@ -34,6 +37,37 @@ object Email {
         }
         sb.toString
       case _ => ""
+    }
+  }*/
+
+//  TODO private
+  def extractTextFromMessage(message: MimeMessage): String = {
+    val content = message.getContent
+    content match {
+      case text: String => text
+      case multipart: Multipart =>
+        (0 until multipart.getCount)
+          .map(multipart.getBodyPart)
+          .flatMap(extractTextFromPart)
+          .mkString("\n")
+      case _ => ""
+    }
+  }
+
+  private def extractTextFromPart(part: BodyPart): Option[String] = {
+    if (part.isMimeType("text/plain") || part.isMimeType("text/html")) {
+      Try(part.getContent.toString).toOption
+    } else if (part.isMimeType("multipart/*")) {
+      part.getContent match {
+        case multipart: Multipart =>
+          Some((0 until multipart.getCount)
+            .map(multipart.getBodyPart)
+            .flatMap(extractTextFromPart)
+            .mkString("\n"))
+        case _ => None
+      }
+    } else {
+      None
     }
   }
 
@@ -88,19 +122,21 @@ object Email {
     val icsAttachments = Email.extractICSAttachments(message)
     val messageId = message.getMessageID.stripPrefix("<").stripSuffix(">")
 
-    val descriptionPrefix = s"$messageId\n\n${Email.getEmailBody(message)}\n\n"
+    val body = Email.extractTextFromMessage(message)
+    val subject = Email.strippedSubject(message)
 
     if (icsAttachments.nonEmpty) {
+      logger.debug(s"Found ${icsAttachments.length} ICS attachments. Extracting them.")
       for (attachment <- icsAttachments;
            event <- ICS.parseICSContent(attachment))
-        events += event.prefixDescriptionWith(descriptionPrefix)
+        events += event.mapDescription(d => s"$messageId\n\n$d")
     } else {
-      val subject = Email.strippedSubject(message)
-      val body = Email.getEmailBody(message)
-      events += CalendarEvent(title = subject, description = descriptionPrefix)
-      //      extractEventWithLLM(subject, subject, body)
+      logger.debug(s"Found no ICS attachments. Attempting AI.")
+      val event = LLM.extractAppointmentFromMessage(subject, body)
+      events += event.mapDescription(d => s"$messageId\n\n$d")
     }
     events.result()
   }
 
+  private val logger = Logger[Email.type]
 }

@@ -3,7 +3,7 @@ package apps.calendar
 
 import java.io.{File, FileInputStream}
 import java.nio.charset.StandardCharsets
-import java.time.LocalDateTime
+import java.time.{LocalDateTime, ZonedDateTime}
 import java.time.format.DateTimeFormatter
 import java.util.Properties
 import javax.mail.Session
@@ -46,25 +46,20 @@ object ICS {
   private def createEventFromICS(data: Map[String, String]): Option[CalendarEvent] = {
     val title = data.getOrElse("SUMMARY", "Untitled Event")
     val start = parseICSDateTime(data.getOrElse("DTSTART", ""))
-    val end = parseICSDateTime(data.getOrElse("DTEND", ""))
+    val end = data.get("DTEND").map(parseICSDateTime)
     val description = data.getOrElse("DESCRIPTION", "").replace("\\n", "\n")
     val location = data.getOrElse("LOCATION", "")
 
-    if (start.isDefined && end.isDefined) {
-      Some(CalendarEvent(title, start.get, end.get, description, location))
-    } else
-      None
+    Some(CalendarEvent(title, start, end, description, location))
   }
 
-  private def parseICSDateTime(dateStr: String): Option[LocalDateTime] = {
-    Try {
-      if (dateStr.contains("T")) {
-        val cleaned = dateStr.replace("Z", "").replace("-", "").replace(":", "")
-        LocalDateTime.parse(cleaned, DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss"))
-      } else {
-        LocalDateTime.parse(dateStr, DateTimeFormatter.ofPattern("yyyyMMdd")).withHour(9)
-      }
-    }.toOption
+  private def parseICSDateTime(dateStr: String): ZonedDateTime = {
+    if (dateStr.contains("T")) {
+      val cleaned = dateStr.replace("Z", "").replace("-", "").replace(":", "")
+      ZonedDateTime.parse(cleaned, DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss"))
+    } else {
+      ZonedDateTime.parse(dateStr, DateTimeFormatter.ofPattern("yyyyMMdd")).withHour(9)
+    }
   }
 
 

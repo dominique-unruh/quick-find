@@ -5,9 +5,9 @@ import com.typesafe.scalalogging.Logger
 import de.unruh.quickfind.apps.calendar.EventEditor.logger
 import de.unruh.quickfind.apps.nextcloud.UploadingTransferHandler
 
-import java.awt.{BorderLayout, Color, Component, Dimension, Font, GridBagConstraints, GridBagLayout, Insets}
-import java.net.URLEncoder
-import java.time.LocalDateTime
+import java.awt.{BorderLayout, Color, Component, Desktop, Dimension, Font, GridBagConstraints, GridBagLayout, Insets}
+import java.net.{URI, URLEncoder}
+import java.time.{LocalDateTime, ZonedDateTime}
 import java.time.format.DateTimeFormatter
 import javax.swing.{BorderFactory, Box, BoxLayout, JButton, JComboBox, JLabel, JPanel, JScrollPane, JTextArea, JTextField}
 import scala.compiletime.uninitialized
@@ -17,39 +17,52 @@ class EventEditor(event: CalendarEvent,
                   showError: String => Unit,
                   showInfo: String => Unit,
                   removeEvent: CalendarEvent => Unit) extends JPanel {
-  private val dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
+  private val dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm z")
   private var titleField: JTextField = uninitialized
   private var startField: JTextField = uninitialized
   private var endField: JTextField = uninitialized
   private var locationField: JTextField = uninitialized
   private var descArea: JTextArea = uninitialized
+  private var calendarCombo: JComboBox[String] = uninitialized
   private var eventIsValid: Boolean = false
 
   initialize()
 
-  private def updateEvent(): Unit = {
+  private def getEvent(): Option[CalendarEvent] = {
     var success = true
-    event.title = titleField.getText
-    event.location = locationField.getText
-    event.description = descArea.getText
+    val title = titleField.getText
+    val location = locationField.getText
+    val description = descArea.getText
+    var startTime: Option[ZonedDateTime] = None
+    var endTime: Option[ZonedDateTime] = None
     try
-      event.startTime = LocalDateTime.parse(startField.getText, dateTimeFormatter)
+      startTime = Some(ZonedDateTime.parse(startField.getText, dateTimeFormatter))
       warnColor(startField, false)
     catch
       case NonFatal(e) =>
         logger.debug(s"Parsing start time: ${e.toString}")
         success = false
         warnColor(startField, true)
-    try
-      event.endTime = LocalDateTime.parse(endField.getText, dateTimeFormatter)
+
+    if (endField.getText.nonEmpty)
       warnColor(endField, false)
-    catch
-      case NonFatal(e) =>
-        logger.debug(s"Parsing end time: ${e.toString}")
-        success = false
-        warnColor(endField, true)
+    else
+      try
+        endTime = Some(ZonedDateTime.parse(endField.getText, dateTimeFormatter))
+        warnColor(endField, false)
+      catch
+        case NonFatal(e) =>
+          logger.debug(s"Parsing end time: ${e.toString}")
+          success = false
+          warnColor(endField, true)
 
     eventIsValid = success
+
+    if (success)
+      Some(CalendarEvent(title = title, location = location, startTime = startTime.get, endTime = endTime, description = description,
+        calendar = calendarCombo.getSelectedItem.asInstanceOf[String]))
+    else
+      None
   }
 
   private def warnColor(component: JTextField, warn: Boolean): Unit = {
@@ -60,7 +73,7 @@ class EventEditor(event: CalendarEvent,
   }
 
   def initialize(): Unit = {
-    val updateListener = UniversalChangeListener(updateEvent)
+    val updateListener = UniversalChangeListener(() => getEvent())
     setLayout(new BorderLayout(10, 10))
     setBorder(BorderFactory.createCompoundBorder(
       BorderFactory.createLineBorder(Color(200, 200, 200), 1),
@@ -96,7 +109,8 @@ class EventEditor(event: CalendarEvent,
     startField.addActionListener(updateListener)
     startField.addFocusListener(updateListener)
 
-    endField = new JTextField(event.endTime.format(dateTimeFormatter), 15)
+    endField = new JTextField(event.endTime.map(_.format(dateTimeFormatter))
+      .getOrElse(event.startTime.plusHours(1).format(dateTimeFormatter)), 15)
     endField.addActionListener(updateListener)
     endField.addFocusListener(updateListener)
 
@@ -158,12 +172,10 @@ class EventEditor(event: CalendarEvent,
     // Calendar selection
     val calendarLabel = new JLabel("Calendar:")
     calendarLabel.setAlignmentX(Component.CENTER_ALIGNMENT)
-    val calendarCombo = new JComboBox[String](CalendarEvent.calendars.toArray)
+    calendarCombo = new JComboBox[String](CalendarEvent.calendars.toArray)
     calendarCombo.setSelectedItem(event.calendar)
     calendarCombo.setMaximumSize(new Dimension(120, 30))
-    calendarCombo.addActionListener { _ =>
-      event.calendar = calendarCombo.getSelectedItem.asInstanceOf[String]
-    }
+    calendarCombo.addActionListener(updateListener)
 
     actionsPanel.add(calendarLabel)
     actionsPanel.add(Box.createRigidArea(new Dimension(0, 5)))
@@ -198,9 +210,11 @@ class EventEditor(event: CalendarEvent,
 
     add(detailsPanel, BorderLayout.CENTER)
     add(actionsPanel, BorderLayout.EAST)
+
+    getEvent() // Checks fields
   }
 
-  private def addToGoogleCalendar(event: CalendarEvent): Unit = {
+/*  private def addToGoogleCalendar(event: CalendarEvent): Unit = {
     if (!eventIsValid)
       showError("Cannot add the event. Not currently valid")
       return
@@ -211,11 +225,14 @@ class EventEditor(event: CalendarEvent,
       val details = URLEncoder.encode(event.description, "UTF-8")
       val location = URLEncoder.encode(event.location, "UTF-8")
       val startDate = event.startTime.format(dateFormat)
-      val endDate = event.endTime.format(dateFormat)
+      val endDate = event.endTime.map(_.format(dateFormat))
+      val startEndDate = endDate match
+        case None => startDate
+        case Some(end) => s"$startDate/$end"
 
       val url = s"https://calendar.google.com/calendar/render?action=TEMPLATE" +
         s"&text=$title" +
-        s"&dates=$startDate/$endDate" +
+        s"&dates=$startEndDate" +
         s"&details=$details" +
         s"&location=$location" +
         s"&ctz=Europe/Berlin"
@@ -228,6 +245,47 @@ class EventEditor(event: CalendarEvent,
       case e: Exception =>
         showError(s"Error opening Google Calendar: ${e.getMessage}")
     }
+  }*/
+
+  val calendars: Map[String, String] = Map(
+    "private" -> "private",
+    "work" -> "Dominique Unruh",
+  )
+
+  def addToGoogleCalendar(calendarEvent: CalendarEvent): Unit = {
+    // Get the calendar ID from the map
+    val calendarId = calendars.getOrElse(
+      calendarEvent.calendar,
+      throw RuntimeException(s"Calendar '${calendarEvent.calendar}' not found in configured calendars")
+    )
+
+    // Format times as yyyyMMdd'T'HHmmss'Z' in UTC or yyyyMMdd'T'HHmmss for local time
+    val dateFormatter = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss")
+
+    val startTimeFormatted = calendarEvent.startTime.format(dateFormatter)
+    val endTimeFormatted = calendarEvent.endTime
+      .getOrElse(calendarEvent.startTime.plusHours(1))
+      .format(dateFormatter)
+
+    // Build the Google Calendar URL
+    val params = Seq(
+      "action" -> "TEMPLATE",
+      "text" -> calendarEvent.title,
+      "dates" -> s"$startTimeFormatted/$endTimeFormatted",
+      "details" -> calendarEvent.description,
+      "location" -> calendarEvent.location,
+      "src" -> calendarId
+    ).filter(_._2.nonEmpty) // Remove empty parameters
+      .map { case (key, value) =>
+        s"$key=${URLEncoder.encode(value, "UTF-8")}"
+      }
+      .mkString("&")
+
+    val url = s"https://calendar.google.com/calendar/render?$params"
+
+    // Open in default browser
+//    if (Desktop.isDesktopSupported && Desktop.getDesktop.isSupported(Desktop.Action.BROWSE)) {
+    Desktop.getDesktop.browse(new URI(url))
   }
 }
 
