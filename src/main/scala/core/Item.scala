@@ -88,6 +88,10 @@ trait Item {
 
   val persistentKey: Array[Byte]
 
+  /** Does the predicate apply to this or an ancestor? */
+  def hasAncestor(predicate: Item => Boolean): Boolean =
+    predicate(this) || parentOption.exists(_.hasAncestor(predicate))
+  
   def pathTo(root: Item): Seq[Item] = {
     val builder = Seq.newBuilder[Item]
     var current = this

@@ -3,11 +3,13 @@ package items
 
 import core.{ChildItem, Item, SVGImage, Utils}
 
-import de.unruh.quickfind.items.FileItem.mtimeOf
+import com.typesafe.scalalogging.Logger
+import de.unruh.quickfind.items.FileItem.{logger, mtimeOf}
 
 import java.io.{FileReader, IOException, UncheckedIOException}
 import java.nio.file.attribute.FileTime
-import java.nio.file.{Files, Path}
+import java.nio.file.{Files, LinkOption, Path}
+import java.util
 import scala.collection.IterableOnce
 import scala.concurrent.duration.Duration
 import scala.jdk.StreamConverters.*
@@ -30,6 +32,7 @@ sealed class FileItem protected (val parent: Item, path: Path) extends ChildItem
 
   /** Show the file in Thunar file manager */
   override def defaultAction(): Unit =
+//    logger.debug(s"weight=$weight, self=$selfWeight, adj=$weightAdjustment, parent=${parent.weight}")
     Utils.showInFileManager(path)
 
   def ignoredPath(file: Path): Boolean = {
@@ -46,10 +49,7 @@ sealed class FileItem protected (val parent: Item, path: Path) extends ChildItem
 
     if (folder) {
       try
-        val files = Utils.usingWithTimeout(Files.list(path), Duration("60s")) {
-          _.toScala(List)
-        }
-        for (file <- files
+        for (file <- Using.resource(Files.list(path))(_.toScala(List))
              if !ignoredPath(file))
           yield new FileItem(this, file)
       catch
@@ -84,4 +84,21 @@ object FileItem {
   private def mtimeOf(path: Path): Long =
     try Files.getLastModifiedTime(path).toMillis
     catch case _ => -1
+
+  def fileAsItem(parent: Item, path: Path, trusted: Boolean = false): Option[ChildItem] = {
+    val item =
+      if (!Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS)
+        && !trusted)
+        (FileItem(parent, path))
+      else if (path.getFileName.toString.endsWith(".org") && Files.isRegularFile(path))
+        (OrgFile(parent, path))
+      else
+        (FileItem(parent, path))
+    if (parent.hasAncestor(p => util.Arrays.equals(p.persistentKey, item.persistentKey)))
+      None
+    else
+      Some(item)
+  }
+
+  private val logger = Logger[FileItem]
 }
