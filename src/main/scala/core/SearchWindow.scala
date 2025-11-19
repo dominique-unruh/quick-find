@@ -6,6 +6,7 @@ import SearchWindow.*
 
 import java.awt.{BorderLayout, KeyboardFocusManager, Toolkit}
 import java.awt.event.{KeyEvent, WindowEvent, WindowFocusListener}
+import java.nio.file.Path
 import java.util
 import javax.swing.{Box, JFrame, JLabel, JPanel, JTextField, SwingUtilities, WindowConstants}
 import javax.swing.event.{DocumentEvent, DocumentListener}
@@ -209,6 +210,7 @@ class SearchWindow(loadRoot: () => Item) extends JFrame {
 object SearchWindow {
   // TODO equals, hashCode
   private object loadingItem extends Item {
+    override val underlyingFile: Option[Path] = None
     override val parentOption: Option[Item] = None
     override val children: List[ChildItem] = Nil
     override def defaultAction(): Unit = {}

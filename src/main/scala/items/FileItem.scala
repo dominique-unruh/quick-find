@@ -4,7 +4,7 @@ package items
 import core.{ChildItem, Item, SVGImage, Utils}
 
 import com.typesafe.scalalogging.Logger
-import de.unruh.quickfind.items.FileItem.{logger, mtimeOf}
+import de.unruh.quickfind.items.FileItem.{fileAsItem, logger, mtimeOf}
 
 import java.io.{FileReader, IOException, UncheckedIOException}
 import java.nio.file.attribute.FileTime
@@ -13,13 +13,14 @@ import java.util
 import scala.collection.IterableOnce
 import scala.concurrent.duration.Duration
 import scala.jdk.StreamConverters.*
-import scala.util.{Using, boundary}
+import scala.util.{Random, Using, boundary}
 
 /** An item representing a file in the file system. */
 sealed class FileItem protected (val parent: Item, path: Path) extends ChildItem {
-//  if (Item.getCount % 100000 == 0)
-//    println(s"FileItem: $path")
-
+  //  if (Item.getCount % 100000 == 0)
+  //    println(s"FileItem: $path")
+  override val underlyingFile: Option[Path] = Some(path.normalize())
+  
   override val persistentKey: Array[Byte] = path.toString.getBytes
 
   /** The file name part of the path */
@@ -50,8 +51,10 @@ sealed class FileItem protected (val parent: Item, path: Path) extends ChildItem
     if (folder) {
       try
         for (file <- Using.resource(Files.list(path))(_.toScala(List))
-             if !ignoredPath(file))
-          yield new FileItem(this, file)
+             if !ignoredPath(file)
+             if !parent.hasAncestor(p => p.underlyingFile.contains(file.normalize()))
+             )
+          yield fileAsItem(parent=this, path=file)
       catch
         case _: IOException => Nil
         case _: UncheckedIOException => Nil
@@ -85,19 +88,24 @@ object FileItem {
     try Files.getLastModifiedTime(path).toMillis
     catch case _ => -1
 
-  def fileAsItem(parent: Item, path: Path, trusted: Boolean = false): Option[ChildItem] = {
-    val item =
-      if (!Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS)
-        && !trusted)
-        (FileItem(parent, path))
+  def fileAsItem(parent: Item, path: Path, trusted: Boolean = false): ChildItem = {
+//    val item =
+      if (!Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS) && !trusted)
+        FileItem(parent, path)
       else if (path.getFileName.toString.endsWith(".org") && Files.isRegularFile(path))
-        (OrgFile(parent, path))
+        OrgFile(parent, path)
       else
-        (FileItem(parent, path))
-    if (parent.hasAncestor(p => util.Arrays.equals(p.persistentKey, item.persistentKey)))
-      None
-    else
-      Some(item)
+        FileItem(parent, path)
+//    if (Random.between(0, 100000) == 0)
+//      println(item.toString)
+//    if (item.isInstanceOf[OrgFile])
+//      println(s"ORG: $item")
+//    if (item.toString.contains("quick-find-menu.org"))
+//      println("XXX")
+//    if (parent.hasAncestor(p => util.Arrays.equals(p.persistentKey, item.persistentKey)))
+//      None
+//    else
+//      Some(item)
   }
 
   private val logger = Logger[FileItem]

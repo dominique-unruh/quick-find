@@ -15,6 +15,7 @@ import scala.util.Using
 /** A file in Emacs org-mode, with headings as children.
  * @param path Path of the org file */
 class OrgFile(val parent: Item, val path: Path) extends ChildItem {
+  override val underlyingFile: Option[Path] = Some(path.normalize())
   private val (headings: Seq[OrgHeading], content: IndexedSeq[String]) =
     parseOrgFile(this, path)
   override def toString: String = s"[OrgFile $path]"
@@ -101,6 +102,7 @@ object OrgFile {
  */
 class OrgHeading private[items] (val parent: Item, path: Path, val firstLine: Int, lastLine: Int, val title: String,
                                  subheadings: Seq[OrgHeading], fileContent: IndexedSeq[String]) extends ChildItem {
+  override val underlyingFile: Option[Path] = Some(path.normalize())
   override val children: Iterable[ChildItem] =
     ParseText.parseText(this, path, preamble) ++ subheadings
   override val persistentKey: Array[Byte] = (path.toString + ":" + title).getBytes

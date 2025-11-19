@@ -3,8 +3,11 @@ package items
 
 import core.{Item, LeafItem, SVGImage, ScalableImage, SnippetPreviewItem}
 
+import java.nio.file.Path
+
 class MessageId(val parent: Item, address: String, preview: Option[(String, String, String)])
   extends SnippetPreviewItem(preview), LeafItem {
+  override val underlyingFile: Option[Path] = None
   override def icon: ScalableImage = MessageId.icon
   override def title: String = address
   override def defaultAction(): Unit =

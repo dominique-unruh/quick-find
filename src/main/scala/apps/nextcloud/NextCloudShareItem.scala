@@ -5,7 +5,10 @@ import items.DirectItem
 
 import de.unruh.quickfind.core.{Item, ScalableImage}
 
+import java.nio.file.Path
+
 class NextCloudShareItem(val parent: Item) extends DirectItem {
+  override val underlyingFile: Option[Path] = None
   private lazy val app = new NextCloudShareApp
   override val persistentKey: Array[Byte] = Array.empty
 

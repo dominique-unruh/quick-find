@@ -5,8 +5,11 @@ import core.{Item, LeafItem, SVGImage, ScalableImage, SnippetPreviewItem}
 
 import ShellCommand.*
 
+import java.nio.file.Path
+
 class ShellCommand(val parent: Item, command: String, trust: trusted.type, preview: Option[(String,String,String)])
   extends LeafItem, SnippetPreviewItem(preview) {
+  override val underlyingFile: Option[Path] = None
   override val persistentKey: Array[Byte] = command.getBytes
   override def title: String = s"Run: $command"
   override def toString: String = s"[Shell $command]"

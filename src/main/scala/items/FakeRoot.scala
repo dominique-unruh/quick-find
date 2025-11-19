@@ -3,7 +3,10 @@ package items
 
 import core.{ChildItem, Item, ScalableImage}
 
+import java.nio.file.Path
+
 class FakeRoot(create: Item => ChildItem) extends Item {
+  override val underlyingFile: Option[Path] = None
   override def defaultAction(): Unit = {}
   override val children: Iterable[ChildItem] = Seq(create(this))
   override def title: String = "fake root"

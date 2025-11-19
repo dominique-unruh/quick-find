@@ -9,6 +9,7 @@ import java.nio.file.Path
 import scala.collection.IndexedSeqView
 
 class OrgRoot(val path: Path) extends Item {
+  override val underlyingFile: Option[Path] = Some(path.normalize())
   private val (headings: Seq[OrgHeading], content: IndexedSeq[String]) =
     parseOrgFile(this, path)
   override val parentOption: Option[Item] = None

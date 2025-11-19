@@ -13,7 +13,7 @@ import scala.util.boundary.break
 
 /** An item in the search results. May contain other items. */
 trait Item {
-  countCreations()
+  countCreations(this)
 
   val parentOption: Option[Item]
 
@@ -91,8 +91,8 @@ trait Item {
   /** Does the predicate apply to this or an ancestor? */
   def hasAncestor(predicate: Item => Boolean): Boolean =
     predicate(this) || parentOption.exists(_.hasAncestor(predicate))
-  
-  def pathTo(root: Item): Seq[Item] = {
+
+  def pathTo(root: Item | Null): Seq[Item] = {
     val builder = Seq.newBuilder[Item]
     var current = this
     boundary {
@@ -107,16 +107,21 @@ trait Item {
     }
     builder.result().reverse
   }
+
+  /** This must be defined before `val children` is initialized.
+   * Must be a normalized Path */
+  val underlyingFile: Option[Path]
 }
 
 object Item {
   val defaultIcon: SVGImage = SVGImage.fromResource("/icons/arrow-interface-next-svgrepo-com.svg")
   private val count = AtomicInteger(0)
   def getCount: Int = count.get()
-  private [Item] def countCreations(): Unit = {
+  private [Item] def countCreations(current: Item): Unit = {
     val c = count.incrementAndGet()
     if (c % 100000 == 0)
       println(s"Count: $c")
+//      new Thread(() => { Thread.sleep(1000); println(current.pathTo(null).mkString(", ")) }).start()
   }
 
   private val tableName = "weight".getBytes

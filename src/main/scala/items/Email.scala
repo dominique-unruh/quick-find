@@ -6,11 +6,13 @@ import core.{Item, LeafItem, SVGImage, ScalableImage, SnippetPreviewItem}
 import weka.classifiers.functions.SGDText
 import weka.core.{Attribute, DenseInstance, Instances, SerializationHelper}
 
+import java.nio.file.Path
 import java.util
 import scala.jdk.CollectionConverters.SeqHasAsJava
 
 class Email(val parent: Item, address: String, preview: Option[(String,String,String)])
   extends SnippetPreviewItem(preview), LeafItem {
+  override val underlyingFile: Option[Path] = None
   override def title: String = address
 
   override def toString: String = s"[Email: $address]"

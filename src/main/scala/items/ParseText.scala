@@ -72,7 +72,7 @@ object ParseText {
         case "file" =>
           val filePath = path.getParent.resolve(linkBody).normalize
           if (!Files.exists(filePath)) break()
-          items ++= FileItem.fileAsItem(parent = parent, path = filePath, trusted = Utils.trustedLocation(path))
+          items += FileItem.fileAsItem(parent = parent, path = filePath, trusted = Utils.trustedLocation(path))
         case "shell" =>
           if (!Utils.trustedLocation(path)) break()
           items += ShellCommand(parent = parent, command = linkBody, trust=ShellCommand.trusted,

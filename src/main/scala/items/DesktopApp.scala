@@ -23,6 +23,7 @@ case class DesktopApp(
 
 
 class DesktopAppItem(val parent: Item, app: DesktopApp) extends ChildItem {
+  override val underlyingFile: Option[Path] = None
   override def title: String = s"App: ${app.name}"
   override def defaultAction(): Unit = DesktopApp.launchApp(app)
   override def previewLine: String = s"${app.comment} \u2013 ${app.exec}"
@@ -40,6 +41,7 @@ class DesktopAppItem(val parent: Item, app: DesktopApp) extends ChildItem {
 }
 
 class DesktopAppCollection(val parent: Item) extends ChildItem {
+  override val underlyingFile: Option[Path] = None
   override val children: Seq[DesktopAppItem] = DesktopApp.getAllDesktopApps.map(DesktopAppItem(this, _))
   override def title: String = "Desktop apps"
   override def defaultAction(): Unit = {}

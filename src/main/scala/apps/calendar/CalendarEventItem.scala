@@ -2,10 +2,13 @@ package de.unruh.quickfind
 package apps.calendar
 
 import items.DirectItem
-
 import core.{Item, ScalableImage}
 
+import java.nio.file.Path
+
 class CalendarEventItem(val parent: Item) extends DirectItem {
+  override val underlyingFile: Option[Path] = None
+
   private lazy val app = new AddCalendarEvent()
   override val persistentKey: Array[Byte] = Array.empty
 

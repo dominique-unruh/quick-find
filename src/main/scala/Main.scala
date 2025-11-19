@@ -33,6 +33,8 @@ object Main {
 }
 
 class ReloadQuickfind(val parent: Item) extends DirectItem {
+  override val underlyingFile: Option[Path] = None
+  
   override def title: String = "Reload quickfind"
 
   override def defaultAction(): Unit = {

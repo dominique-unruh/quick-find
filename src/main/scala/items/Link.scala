@@ -4,9 +4,11 @@ package items
 import core.{Item, LeafItem, SVGImage, ScalableImage, SnippetPreviewItem, Utils}
 
 import java.net.URL
+import java.nio.file.Path
 
 class Link(val parent: Item, url: URL, preview: Option[(String,String,String)])
-  extends SnippetPreviewItem(preview), LeafItem{
+  extends SnippetPreviewItem(preview), LeafItem {
+  override val underlyingFile: Option[Path] = None
   override def title: String = url.toString
   override def icon: ScalableImage = Link.icon
   override def defaultAction(): Unit =
