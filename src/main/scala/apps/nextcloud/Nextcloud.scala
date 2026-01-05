@@ -6,6 +6,8 @@ import org.aarboard.nextcloud.api.NextcloudConnector
 import org.aarboard.nextcloud.api.filesharing.{SharePermissions, ShareType}
 import org.apache.commons.io.FilenameUtils
 
+import scala.sys.process.given
+
 import java.io.File
 import scala.io.Source
 import scala.util.{Random, Using}
@@ -14,7 +16,7 @@ object Nextcloud {
   private val nextcloudFolder = "/home/unruh/cloud/sciebo/tmp/mail-attachments/"
   private val nextcloudUrl = "https://rwth-aachen.sciebo.de"
   private val nextcloudUser = "5QCB65@rwth-aachen.de"
-  private val nextcloudPassword = Using.resource(Source.fromFile("/tmp/pwd"))(_.mkString)
+  private val nextcloudPassword = "secret-tool lookup username 5QCB65@rwth-aachen.de service sciebo".!!.trim
   private val nextcloudRemotePath = "/tmp/mail-attachments/" // Remote path in NextCloud where files will be uploaded
 
   // Initialize NextCloud connector
