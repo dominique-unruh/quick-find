@@ -24,11 +24,14 @@ lazy val root = (project in file("."))
       "javax.mail" % "javax.mail-api" % "1.6.2",
       "com.sun.mail" % "javax.mail" % "1.6.2",
       "com.typesafe.scala-logging" %% "scala-logging" % "3.9.6",
-      "ch.qos.logback" % "logback-classic" % "1.5.20",
+      "ch.qos.logback" % "logback-classic" % "1.5.22",
       "org.scala-lang.modules" %% "scala-swing" % "3.0.0",
       "org.aarboard.nextcloud" % "nextcloud-api" % "14.1.0",
       "com.lihaoyi" %% "sourcecode" % "0.4.4",
       "com.typesafe.play" %% "play-json" % "2.10.8",
+      "org.mnode.ical4j" % "ical4j" % "4.2.2",
+      "net.bytebuddy" % "byte-buddy" % "1.18.3",
+      "net.bytebuddy" % "byte-buddy-agent" % "1.18.3",
     )
   )
 

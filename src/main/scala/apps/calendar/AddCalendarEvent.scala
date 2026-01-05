@@ -19,8 +19,9 @@ import scala.util.{Failure, Success, Try}
 
 // Main Application
 class AddCalendarEvent extends JFrame {
+  FixDndJava.installPatch()
   private given DeferredVal.CheckInitManager()
-  private val events = ArrayBuffer[CalendarEvent]()
+//  private val events = ArrayBuffer[CalendarEvent]()
   private val eventsPanel = DeferredVal[JPanel]
   private val scrollPane = DeferredVal[JScrollPane]
 
@@ -35,11 +36,7 @@ class AddCalendarEvent extends JFrame {
     // Create toolbar
     val toolbar = new JPanel(new FlowLayout(FlowLayout.LEFT))
     val newButton = new JButton("New Event")
-    newButton.addActionListener { _ =>
-      val event = CalendarEvent()
-      events += event
-      refreshEventsList()
-    }
+    newButton.addActionListener { _ => addEventEditor() }
 
     toolbar.add(newButton)
 
@@ -57,6 +54,7 @@ class AddCalendarEvent extends JFrame {
     add(toolbar, BorderLayout.NORTH)
     add(scrollPane, BorderLayout.CENTER)
     setLocationRelativeTo(null)
+    setAlwaysOnTop(true)
 
     KeyboardFocusManager.getCurrentKeyboardFocusManager.addKeyEventDispatcher((event: KeyEvent) => event.getID match
       case KeyEvent.KEY_PRESSED => event.getKeyCode match
@@ -66,27 +64,24 @@ class AddCalendarEvent extends JFrame {
         case _ => false
       case _ => false)
     
-    refreshEventsList()
-    
     DeferredVal.assertInitialized()
   }
 
   def close(): Unit = {
     setVisible(false)
-    events.clear()
-    refreshEventsList()
+    eventsPanel.removeAll()
   }
   
   def showApp(): Unit = {
     setVisible(true)
   }
 
-  private def refreshEventsList(): Unit = {
+/*  private def refreshEventsList(): Unit = {
     eventsPanel.removeAll()
 
     events.foreach { event =>
       val eventWidget = EventEditor(
-        event = event,
+        initialEvent = event,
         removeEvent = { event => { events -= event; refreshEventsList() } },
         showError = showError, showInfo = showInfo,
       )
@@ -96,7 +91,7 @@ class AddCalendarEvent extends JFrame {
 
     eventsPanel.revalidate()
     eventsPanel.repaint()
-  }
+  }*/
 
   private object dropTargetAdapter extends DropTargetAdapter {
     override def dragOver(dtde: DropTargetDragEvent): Unit = {
@@ -111,28 +106,24 @@ class AddCalendarEvent extends JFrame {
 
         transferable match {
           case FileTransferable(file) if Utils.firstLine(file).exists(_.startsWith("BEGIN:VCALENDAR")) =>
-            events ++= ICS.parseICSFile(file)
-            refreshEventsList()
+            addEventEditors(ICS.parseICSFile(file))
             success = true
           case FileTransferable(file) if file.getName.toLowerCase.endsWith(".eml") =>
-            events ++= Email.parseEmailFile(file)
-            refreshEventsList()
+            addEventEditors(Email.parseEmailFile(file))
             success = true
           case StringTransferable(content) if content.startsWith("BEGIN:VCALENDAR") =>
-            events ++= ICS.parseICSContent(content)
-            refreshEventsList()
+            addEventEditors(ICS.parseICSContent(content))
             success = true
           case StringTransferable(content) =>
-            events ++= Email.parseEmailContent(content)
-            refreshEventsList()
+            addEventEditors(Email.parseEmailContent(content))
             success = true
           case _ =>
-            showError("Can process this drag and drop object")
-            refreshEventsList()
+            showError("Cannot process this drag and drop object")
             success = true
         }
       } catch {
         case NonFatal(e) =>
+          e.printStackTrace()
           showError(s"Failed to parse dropped event: $e")
       } finally {
         dtde.dropComplete(success)
@@ -152,6 +143,18 @@ class AddCalendarEvent extends JFrame {
     //      JOptionPane.showMessageDialog(this, message, "Information", JOptionPane.INFORMATION_MESSAGE)
     //    }
     println(s"Info: $message")
+  }
+
+  private def addEventEditors(events: IterableOnce[CalendarEvent]): Unit =
+    for (event <- events) addEventEditor(event)
+
+  private def addEventEditor(event: CalendarEvent = CalendarEvent()): Unit = {
+    val eventWidget = EventEditor(initialEvent = event,
+      removeEvent = { widget => eventsPanel.remove(widget); eventsPanel.revalidate(); eventsPanel.repaint() },
+      showError = showError, showInfo = showInfo)
+    eventsPanel.add(eventWidget)
+    eventsPanel.revalidate()
+    eventsPanel.repaint()
   }
 }
 

@@ -4,6 +4,8 @@ import items.{DesktopApp, DirectItem, ShellCommand}
 
 import de.unruh.quickfind.core.{ChildItem, Item, ScalableImage}
 
+import java.nio.file.Path
+
 
 object Tmp {
   def main(args: Array[String]): Unit = {
@@ -26,6 +28,9 @@ object Tmp {
       override def icon: ScalableImage = Item.defaultIcon
 
       override val persistentKey: Array[Byte] = Array.empty
+      /** This must be defined before `val children` is initialized.
+       * Must be a normalized Path */
+      override val underlyingFile: Option[Path] = None
     }
     val item = DirectItem.instantiate(root, "de.unruh.quickfind.ReloadQuickfind", ShellCommand.trusted)
     println(item)

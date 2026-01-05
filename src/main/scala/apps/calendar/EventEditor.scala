@@ -2,8 +2,8 @@ package de.unruh.quickfind
 package apps.calendar
 
 import com.typesafe.scalalogging.Logger
-import de.unruh.quickfind.apps.calendar.EventEditor.logger
-import de.unruh.quickfind.apps.nextcloud.UploadingTransferHandler
+import apps.calendar.EventEditor.logger
+import apps.nextcloud.UploadingTransferHandler
 
 import java.awt.{BorderLayout, Color, Component, Desktop, Dimension, Font, GridBagConstraints, GridBagLayout, Insets}
 import java.net.{URI, URLEncoder}
@@ -13,10 +13,10 @@ import javax.swing.{BorderFactory, Box, BoxLayout, JButton, JComboBox, JLabel, J
 import scala.compiletime.uninitialized
 import scala.util.control.NonFatal
 
-class EventEditor(event: CalendarEvent,
+class EventEditor(initialEvent: CalendarEvent,
                   showError: String => Unit,
                   showInfo: String => Unit,
-                  removeEvent: CalendarEvent => Unit) extends JPanel {
+                  removeEvent: EventEditor => Unit) extends JPanel {
   private val dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm z")
   private var titleField: JTextField = uninitialized
   private var startField: JTextField = uninitialized
@@ -28,6 +28,8 @@ class EventEditor(event: CalendarEvent,
 
   initialize()
 
+  /** Reconstructs the [[CalendarEvent]] from the UI fields. Has the side-effect of highlighting errors. */
+  //noinspection AccessorLikeMethodIsEmptyParen
   private def getEvent(): Option[CalendarEvent] = {
     var success = true
     val title = titleField.getText
@@ -91,7 +93,7 @@ class EventEditor(event: CalendarEvent,
     gbc.fill = GridBagConstraints.HORIZONTAL
 
     // Title field (larger)
-    titleField = new JTextField(event.title, 30)
+    titleField = new JTextField(initialEvent.title, 30)
     titleField.setFont(titleField.getFont.deriveFont(Font.BOLD, 14f))
     titleField.getDocument.addDocumentListener(updateListener)
 
@@ -105,12 +107,12 @@ class EventEditor(event: CalendarEvent,
     detailsPanel.add(titleField, gbc)
 
     // Date/Time fields
-    startField = new JTextField(event.startTime.format(dateTimeFormatter), 15)
+    startField = new JTextField(initialEvent.startTime.format(dateTimeFormatter), 15)
     startField.addActionListener(updateListener)
     startField.addFocusListener(updateListener)
 
-    endField = new JTextField(event.endTime.map(_.format(dateTimeFormatter))
-      .getOrElse(event.startTime.plusHours(1).format(dateTimeFormatter)), 15)
+    endField = new JTextField(initialEvent.endTime.map(_.format(dateTimeFormatter))
+      .getOrElse(initialEvent.startTime.plusHours(1).format(dateTimeFormatter)), 15)
     endField.addActionListener(updateListener)
     endField.addFocusListener(updateListener)
 
@@ -127,7 +129,7 @@ class EventEditor(event: CalendarEvent,
     detailsPanel.add(endField, gbc)
 
     // Location field
-    locationField = new JTextField(event.location, 30)
+    locationField = new JTextField(initialEvent.location, 30)
     locationField.getDocument.addDocumentListener(updateListener)
 
     gbc.gridx = 0
@@ -141,7 +143,7 @@ class EventEditor(event: CalendarEvent,
     detailsPanel.add(locationField, gbc)
 
     // Description field
-    descArea = new JTextArea(event.description, 2, 30)
+    descArea = new JTextArea(initialEvent.description, 2, 30)
     descArea.setLineWrap(true)
     descArea.setWrapStyleWord(true)
     descArea.getDocument.addDocumentListener(updateListener)
@@ -173,7 +175,7 @@ class EventEditor(event: CalendarEvent,
     val calendarLabel = new JLabel("Calendar:")
     calendarLabel.setAlignmentX(Component.CENTER_ALIGNMENT)
     calendarCombo = new JComboBox[String](CalendarEvent.calendars.toArray)
-    calendarCombo.setSelectedItem(event.calendar)
+    calendarCombo.setSelectedItem(initialEvent.calendar)
     calendarCombo.setMaximumSize(new Dimension(120, 30))
     calendarCombo.addActionListener(updateListener)
 
@@ -190,7 +192,9 @@ class EventEditor(event: CalendarEvent,
     addButton.setFocusPainted(false)
     addButton.setMaximumSize(new Dimension(120, 30))
     addButton.addActionListener { _ =>
-      addToGoogleCalendar(event)
+      getEvent() match
+        case Some(event) => addToGoogleCalendar(event)
+        case None => showError("Event has errors.")
     }
 
     actionsPanel.add(addButton)
@@ -203,7 +207,7 @@ class EventEditor(event: CalendarEvent,
     deleteButton.setForeground(Color.WHITE)
     deleteButton.setFocusPainted(false)
     deleteButton.setMaximumSize(new Dimension(120, 30))
-    deleteButton.addActionListener(UniversalChangeListener(() => removeEvent(event)))
+    deleteButton.addActionListener(UniversalChangeListener(() => removeEvent(this)))
 
     actionsPanel.add(deleteButton)
     actionsPanel.add(Box.createVerticalGlue())

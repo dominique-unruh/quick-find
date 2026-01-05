@@ -40,16 +40,4 @@ public class FixDndJava {
             string = string.replace("[", "%5B").replace("]", "%5D");
         }
     }
-/*
-    @Advice.OnMethodExit(onThrowable = URISyntaxException.class)
-    static void uponParseFailure(@Advice.Thrown(readOnly = false) URISyntaxException exception,
-                                 @Advice.Return(readOnly = false, typing = Assigner.Typing.DYNAMIC) Object ret) {
-        System.out.println(exception);
-        System.out.println(ret);
-        System.out.println("Fail");
-        exception = null;
-    }
-*/
-
-
 }

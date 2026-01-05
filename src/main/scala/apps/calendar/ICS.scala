@@ -1,6 +1,11 @@
 package de.unruh.quickfind
 package apps.calendar
 
+import net.fortuna.ical4j.data.CalendarBuilder
+import net.fortuna.ical4j.model.Property
+import net.fortuna.ical4j.model.component.VEvent
+import net.fortuna.ical4j.model.property.{Description, Location, Summary}
+
 import java.io.{File, FileInputStream}
 import java.nio.charset.StandardCharsets
 import java.time.{LocalDateTime, ZonedDateTime}
@@ -9,10 +14,36 @@ import java.util.Properties
 import javax.mail.Session
 import javax.mail.internet.MimeMessage
 import scala.io.Source
+import scala.jdk.CollectionConverters.CollectionHasAsScala
+import scala.jdk.OptionConverters.RichOptional
 import scala.util.{Try, Using}
 
 object ICS {
+  def fixTimeZone(time: ZonedDateTime): ZonedDateTime = {
+    if (time.getZone.getId.startsWith("ical4j~"))
+      time.toOffsetDateTime.toZonedDateTime
+    else
+      time
+  }
+
   def parseICSFile(file: File): Seq[CalendarEvent] = {
+    val fin = new FileInputStream(file)
+    val builder = new CalendarBuilder()
+    val calendar = builder.build(fin)
+    for (case event: VEvent <- calendar.getComponentList.getAll.asScala.toSeq)
+      yield {
+        val title = event.getProperty[Summary](Property.SUMMARY).toScala.map(_.getValue).getOrElse("Untitled Event")
+        val start = fixTimeZone(event.getDateTimeStart[ZonedDateTime].getDate)
+        val end = event.getEndDate[ZonedDateTime].toScala.map(d => fixTimeZone(d.getDate))
+        val description = event.getProperty[Description](Property.DESCRIPTION).toScala.map(_.getValue).getOrElse("")
+        val location = event.getProperty[Location](Property.LOCATION).toScala.map(_.getValue).getOrElse("")
+
+        CalendarEvent(title, start, end, description, location)
+      }
+  }
+
+
+  def parseICSFileOld(file: File): Seq[CalendarEvent] = {
     val content = Using.resource(Source.fromFile(file, "UTF-8"))(_.mkString)
     parseICSContent(content)
   }
