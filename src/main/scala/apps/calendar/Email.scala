@@ -128,7 +128,7 @@ object Email {
     if (icsAttachments.nonEmpty) {
       logger.debug(s"Found ${icsAttachments.length} ICS attachments. Extracting them.")
       for (attachment <- icsAttachments;
-           event <- ICS.parseICSContent(attachment))
+           event <- ICS.parseICS(attachment))
         events += event.mapDescription(d => s"$messageId\n\n$d")
     } else {
       logger.debug(s"Found no ICS attachments. Attempting AI.")

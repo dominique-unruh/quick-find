@@ -106,13 +106,13 @@ class AddCalendarEvent extends JFrame {
 
         transferable match {
           case FileTransferable(file) if Utils.firstLine(file).exists(_.startsWith("BEGIN:VCALENDAR")) =>
-            addEventEditors(ICS.parseICSFile(file))
+            addEventEditors(ICS.parseICS(file))
             success = true
           case FileTransferable(file) if file.getName.toLowerCase.endsWith(".eml") =>
             addEventEditors(Email.parseEmailFile(file))
             success = true
           case StringTransferable(content) if content.startsWith("BEGIN:VCALENDAR") =>
-            addEventEditors(ICS.parseICSContent(content))
+            addEventEditors(ICS.parseICS(content))
             success = true
           case StringTransferable(content) =>
             addEventEditors(Email.parseEmailContent(content))
