@@ -1,2 +1,9 @@
+set -e
+
 git pull
-sbt stage && ./quickfind
+
+sbt stage
+
+pkill -fe quickfind
+
+./quickfind

@@ -20,7 +20,7 @@ import scala.util.{Try, Using}
 
 object ICS {
   def fixTimeZone(time: ZonedDateTime): ZonedDateTime = {
-    if (time.getZone.getId.startsWith("ical4j~"))
+    if (time.getZone.getId.startsWith("ical4j"))
       time.toOffsetDateTime.toZonedDateTime
     else
       time

@@ -12,5 +12,5 @@ class IntelliJProject(parent: Item, path: Path) extends FileItem(parent, path) {
 
   override def defaultAction(): Unit =
     import sys.process.*
-    Seq("intellij-idea-ultimate-edition", path.getParent.toString).run()
+    Seq("/opt/idea/bin/idea", path.getParent.toString).run()
 }
