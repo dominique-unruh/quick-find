@@ -56,13 +56,13 @@ class AddCalendarEvent extends JFrame {
     setLocationRelativeTo(null)
     setAlwaysOnTop(true)
 
-    KeyboardFocusManager.getCurrentKeyboardFocusManager.addKeyEventDispatcher((event: KeyEvent) => event.getID match
-      case KeyEvent.KEY_PRESSED => event.getKeyCode match
+    KeyboardFocusManager.getCurrentKeyboardFocusManager.addKeyEventDispatcher((event: KeyEvent) => {println(event.toString); event.getID match
+      case KeyEvent.KEY_PRESSED | KeyEvent.KEY_RELEASED => event.getKeyCode match
 //        case KeyEvent.VK_ESCAPE => close(); true
         case KeyEvent.VK_W if event.isControlDown => close(); true
         case KeyEvent.VK_Q if event.isControlDown => close(); true
         case _ => false
-      case _ => false)
+      case _ => false})
     
     DeferredVal.assertInitialized()
   }

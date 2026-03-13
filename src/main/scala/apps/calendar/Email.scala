@@ -117,10 +117,12 @@ object Email {
     events
   }
 
+  private def mailLink = MailLink(whohasit=Some("Dominique Unruh"))
+  
   private def processEmail(message: MimeMessage): Seq[CalendarEvent] = {
     val events = Seq.newBuilder[CalendarEvent]
     val icsAttachments = Email.extractICSAttachments(message)
-    val messageId = message.getMessageID.stripPrefix("<").stripSuffix(">")
+    val messageLink = mailLink.getLink(message)
 
     val body = Email.extractTextFromMessage(message)
     val subject = Email.strippedSubject(message)
@@ -129,11 +131,11 @@ object Email {
       logger.debug(s"Found ${icsAttachments.length} ICS attachments. Extracting them.")
       for (attachment <- icsAttachments;
            event <- ICS.parseICS(attachment))
-        events += event.mapDescription(d => s"$messageId\n\n$d")
+        events += event.mapDescription(d => s"$messageLink\n\n$d")
     } else {
       logger.debug(s"Found no ICS attachments. Attempting AI.")
       val event = LLM.extractAppointmentFromMessage(subject, body)
-      events += event.mapDescription(d => s"$messageId\n\n$d")
+      events += event.mapDescription(d => s"$messageLink\n\n$d")
     }
     events.result()
   }

@@ -3,13 +3,14 @@ package apps.calendar
 
 import net.fortuna.ical4j.data.CalendarBuilder
 import net.fortuna.ical4j.model.{Calendar, Property}
-import net.fortuna.ical4j.model.component.VEvent
-import net.fortuna.ical4j.model.property.{Description, Location, Summary}
+import net.fortuna.ical4j.model.component.{VEvent, VTimeZone}
+import net.fortuna.ical4j.model.property.{DateProperty, Description, Location, Summary, TzId}
 
 import java.io.{File, FileInputStream, InputStream, Reader, StringReader}
 import java.nio.charset.StandardCharsets
-import java.time.{LocalDateTime, ZonedDateTime}
+import java.time.{LocalDateTime, ZoneId, ZonedDateTime}
 import java.time.format.DateTimeFormatter
+import java.time.temporal.Temporal
 import java.util.Properties
 import javax.mail.Session
 import javax.mail.internet.MimeMessage
@@ -19,24 +20,39 @@ import scala.jdk.OptionConverters.RichOptional
 import scala.util.{Try, Using}
 
 object ICS {
-  def fixTimeZone(time: ZonedDateTime): ZonedDateTime = {
-    if (time.getZone.getId.startsWith("ical4j"))
-      time.toOffsetDateTime.toZonedDateTime
-    else
-      time
+  def fixTimeZone(time: Temporal, currentTimezone: Option[VTimeZone]): ZonedDateTime = time match {
+    case time: ZonedDateTime =>
+      if (time.getZone.getId.startsWith("ical4j"))
+        time.toOffsetDateTime.toZonedDateTime
+      else
+        time
+    case time: LocalDateTime =>
+      currentTimezone match {
+        case None => throw RuntimeException("In calendar event, no timezone specified")
+        case Some(timezone) =>
+          time.atZone(ZoneId.of(timezone.getTimeZoneId.getValue))
+      }
+    case _ =>
+      throw RuntimeException(s"Unsure how to process $time (${time.getClass}")
   }
 
-  def calendarToEvents(calendar: Calendar): Seq[CalendarEvent] =
-    for (case event: VEvent <- calendar.getComponentList.getAll.asScala.toSeq)
-      yield {
-        val title = event.getProperty[Summary](Property.SUMMARY).toScala.map(_.getValue).getOrElse("Untitled Event")
-        val start = fixTimeZone(event.getDateTimeStart[ZonedDateTime].getDate)
-        val end = event.getEndDate[ZonedDateTime].toScala.map(d => fixTimeZone(d.getDate))
-        val description = event.getProperty[Description](Property.DESCRIPTION).toScala.map(_.getValue).getOrElse("")
-        val location = event.getProperty[Location](Property.LOCATION).toScala.map(_.getValue).getOrElse("")
-
-        CalendarEvent(title, start, end, description, location)
+  def calendarToEvents(calendar: Calendar): Seq[CalendarEvent] = {
+    val events = Seq.newBuilder[CalendarEvent]
+    var currentTimezone: Option[VTimeZone] = None
+    for (case component <- calendar.getComponentList.getAll.asScala.toSeq)
+      component match {
+        case timezone: VTimeZone =>
+          currentTimezone = Some(timezone)
+        case event: VEvent =>
+          val title = event.getProperty[Summary](Property.SUMMARY).toScala.map(_.getValue).getOrElse("Untitled Event")
+          val start = fixTimeZone(event.getDateTimeStart[Temporal].getDate, currentTimezone)
+          val end = event.getEndDate[Temporal].toScala.map(d => fixTimeZone(d.getDate, currentTimezone))
+          val description = event.getProperty[Description](Property.DESCRIPTION).toScala.map(_.getValue).getOrElse("")
+          val location = event.getProperty[Location](Property.LOCATION).toScala.map(_.getValue).getOrElse("")
+          events += CalendarEvent(title, start, end, description, location)
       }
+    events.result()
+  }
 
   def parseICS(istream: InputStream): Seq[CalendarEvent] =
     calendarToEvents(CalendarBuilder().build(istream))

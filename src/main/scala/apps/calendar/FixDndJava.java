@@ -34,8 +34,8 @@ public class FixDndJava {
 
     @Advice.OnMethodEnter
     static void beforeConstructor(@Advice.Argument(value=0, readOnly=false) String string) {
-        System.out.println("Constructor");
-        System.out.println(string);
+//        System.out.println("Constructor");
+//        System.out.println(string);
         if (string.contains("[") || string.contains("]")) {
             string = string.replace("[", "%5B").replace("]", "%5D");
         }

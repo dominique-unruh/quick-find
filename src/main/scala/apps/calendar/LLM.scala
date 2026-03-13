@@ -133,7 +133,7 @@ object LLM {
 
     // Extract JSON from the content (handle potential markdown code blocks)
     val jsonContent = if (contentText.trim.startsWith("```")) {
-      contentText.split("```").find(_.trim.startsWith("{")).getOrElse(contentText)
+      contentText.split("```(json)?").find(_.trim.startsWith("{")).getOrElse(contentText)
     } else {
       contentText
     }
