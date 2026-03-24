@@ -32,6 +32,10 @@ lazy val root = (project in file("."))
       "org.mnode.ical4j" % "ical4j" % "4.2.2",
       "net.bytebuddy" % "byte-buddy" % "1.18.3",
       "net.bytebuddy" % "byte-buddy-agent" % "1.18.3",
+      "com.google.apis"        % "google-api-services-calendar" % "v3-rev20260225-2.0.0",
+      "com.google.auth"        % "google-auth-library-oauth2-http" % "1.43.0",
+      "com.google.api-client"  % "google-api-client" % "2.9.0",
+      "com.google.oauth-client" % "google-oauth-client-jetty" % "1.39.0",
     )
   )
 

@@ -122,7 +122,7 @@ object Email {
   private def processEmail(message: MimeMessage): Seq[CalendarEvent] = {
     val events = Seq.newBuilder[CalendarEvent]
     val icsAttachments = Email.extractICSAttachments(message)
-    val messageLink = mailLink.getLink(message)
+    val messageLink = mailLink.getLinkHtml(message)
 
     val body = Email.extractTextFromMessage(message)
     val subject = Email.strippedSubject(message)

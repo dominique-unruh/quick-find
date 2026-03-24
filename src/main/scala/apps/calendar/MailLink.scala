@@ -2,6 +2,8 @@ package de.unruh.quickfind
 package apps.calendar
 
 import de.unruh.quickfind.apps.calendar.MailLink.{MailInfo, getMailInfo, percentEncode}
+import org.apache.commons.text.StringEscapeUtils
+import org.apache.commons.text.StringEscapeUtils.escapeHtml4
 
 import java.net.{URI, URL, URLEncoder}
 import java.nio.charset.StandardCharsets
@@ -23,6 +25,18 @@ class MailLink(whohasit: Option[String],
                includeDate: Boolean = true,
                includeFrom: Boolean = true,
                includeTo: Boolean = true) {
+
+  def getLinkHtml(mailInfo: MailInfo): String = {
+    val link = getLink(mailInfo)
+    val text = mailInfo.from match {
+      case Some(sender) => s"Email from ${escapeHtml4(sender.toString)}"
+      case None => "Email"
+    }
+    s"""<a href="${escapeHtml4(link.toString)}">$text</a>"""
+  }
+
+  def getLinkHtml(mail: MimeMessage): String =
+    getLinkHtml(getMailInfo(mail))
 
   def getLink(mailInfo: MailInfo): URL = {
     val fields = Iterator.newBuilder[(String, String)]

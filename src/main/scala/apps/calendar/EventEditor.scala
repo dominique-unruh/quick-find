@@ -174,7 +174,7 @@ class EventEditor(initialEvent: CalendarEvent,
     // Calendar selection
     val calendarLabel = new JLabel("Calendar:")
     calendarLabel.setAlignmentX(Component.CENTER_ALIGNMENT)
-    calendarCombo = new JComboBox[String](CalendarEvent.calendars.toArray)
+    calendarCombo = new JComboBox[String](GoogleCalendarClient.calendars.keys.toArray)
     calendarCombo.setSelectedItem(initialEvent.calendar)
     calendarCombo.setMaximumSize(new Dimension(120, 30))
     calendarCombo.addActionListener(updateListener)
@@ -193,7 +193,7 @@ class EventEditor(initialEvent: CalendarEvent,
     addButton.setMaximumSize(new Dimension(120, 30))
     addButton.addActionListener { _ =>
       getEvent() match
-        case Some(event) => addToGoogleCalendar(event)
+        case Some(event) => GoogleCalendarClient.createEvent(event)
         case None => showError("Event has errors.")
     }
 
@@ -250,47 +250,6 @@ class EventEditor(initialEvent: CalendarEvent,
         showError(s"Error opening Google Calendar: ${e.getMessage}")
     }
   }*/
-
-  val calendars: Map[String, String] = Map(
-    "private" -> "private",
-    "work" -> "Dominique Unruh",
-  )
-
-  def addToGoogleCalendar(calendarEvent: CalendarEvent): Unit = {
-    // Get the calendar ID from the map
-    val calendarId = calendars.getOrElse(
-      calendarEvent.calendar,
-      throw RuntimeException(s"Calendar '${calendarEvent.calendar}' not found in configured calendars")
-    )
-
-    // Format times as yyyyMMdd'T'HHmmss'Z' in UTC or yyyyMMdd'T'HHmmss for local time
-    val dateFormatter = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss")
-
-    val startTimeFormatted = calendarEvent.startTime.format(dateFormatter)
-    val endTimeFormatted = calendarEvent.endTime
-      .getOrElse(calendarEvent.startTime.plusHours(1))
-      .format(dateFormatter)
-
-    // Build the Google Calendar URL
-    val params = Seq(
-      "action" -> "TEMPLATE",
-      "text" -> calendarEvent.title,
-      "dates" -> s"$startTimeFormatted/$endTimeFormatted",
-      "details" -> calendarEvent.description,
-      "location" -> calendarEvent.location,
-      "src" -> calendarId
-    ).filter(_._2.nonEmpty) // Remove empty parameters
-      .map { case (key, value) =>
-        s"$key=${URLEncoder.encode(value, "UTF-8")}"
-      }
-      .mkString("&")
-
-    val url = s"https://calendar.google.com/calendar/render?$params"
-
-    // Open in default browser
-//    if (Desktop.isDesktopSupported && Desktop.getDesktop.isSupported(Desktop.Action.BROWSE)) {
-    Desktop.getDesktop.browse(new URI(url))
-  }
 }
 
 object EventEditor {

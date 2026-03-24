@@ -4,3 +4,4 @@
 /target/
 /.bsp/sbt.json
 *~
+/.google-credentials.json
