@@ -98,8 +98,10 @@ object FileItem {
       return OrgFile(parent, path)
     if (fileName == ".idea" && Files.isDirectory(path))
       return IntelliJProject(parent, path)
+    if (fileName == ".obsidian" && Files.isDirectory(path))
+      return ObsidianVault(parent, path)
 
-    return FileItem(parent, path)
+    FileItem(parent, path)
   }
 
   private val logger = Logger[FileItem]
