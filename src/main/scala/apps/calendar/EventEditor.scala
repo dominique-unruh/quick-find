@@ -9,7 +9,7 @@ import java.awt.{BorderLayout, Color, Component, Desktop, Dimension, Font, GridB
 import java.net.{URI, URLEncoder}
 import java.time.{LocalDateTime, ZonedDateTime}
 import java.time.format.DateTimeFormatter
-import javax.swing.{BorderFactory, Box, BoxLayout, JButton, JComboBox, JLabel, JPanel, JScrollPane, JTextArea, JTextField}
+import javax.swing.{BorderFactory, Box, BoxLayout, JButton, JComboBox, JEditorPane, JLabel, JPanel, JScrollPane, JTextArea, JTextField}
 import scala.compiletime.uninitialized
 import scala.util.control.NonFatal
 
@@ -22,7 +22,7 @@ class EventEditor(initialEvent: CalendarEvent,
   private var startField: JTextField = uninitialized
   private var endField: JTextField = uninitialized
   private var locationField: JTextField = uninitialized
-  private var descArea: JTextArea = uninitialized
+  private var descArea: JEditorPane = uninitialized
   private var calendarCombo: JComboBox[String] = uninitialized
   private var eventIsValid: Boolean = false
 
@@ -82,7 +82,7 @@ class EventEditor(initialEvent: CalendarEvent,
       BorderFactory.createEmptyBorder(15, 15, 15, 15)
     ))
     setBackground(new Color(250, 250, 250))
-    setMaximumSize(new Dimension(Integer.MAX_VALUE, 200))
+    setMaximumSize(new Dimension(Integer.MAX_VALUE, 400))
 
     // Left side: Event details
     val detailsPanel = new JPanel(new GridBagLayout())
@@ -143,16 +143,17 @@ class EventEditor(initialEvent: CalendarEvent,
     detailsPanel.add(locationField, gbc)
 
     // Description field
-    descArea = new JTextArea(initialEvent.description, 2, 30)
-    descArea.setLineWrap(true)
-    descArea.setWrapStyleWord(true)
+    descArea = new JEditorPane()
+    descArea.setContentType("text/html") // tell it to use the HTML editor
+    descArea.setText(initialEvent.description) // HTML source string
+    descArea.setEditable(true)
     descArea.getDocument.addDocumentListener(updateListener)
     descArea.setTransferHandler(UploadingTransferHandler(
       errorMessage = showError,
       infoMessage = showInfo,
     ))
     val descScroll = new JScrollPane(descArea)
-    descScroll.setPreferredSize(new Dimension(400, 50))
+    descScroll.setPreferredSize(new Dimension(400, 250))
 
     gbc.gridx = 0
     gbc.gridy = 3
@@ -193,7 +194,7 @@ class EventEditor(initialEvent: CalendarEvent,
     addButton.setMaximumSize(new Dimension(120, 30))
     addButton.addActionListener { _ =>
       getEvent() match
-        case Some(event) => GoogleCalendarClient.createEvent(event)
+        case Some(event) => GoogleCalendarClient.createEvent(event, showError=showError)
         case None => showError("Event has errors.")
     }
 

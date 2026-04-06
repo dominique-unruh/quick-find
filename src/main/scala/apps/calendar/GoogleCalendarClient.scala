@@ -63,35 +63,42 @@ object GoogleCalendarClient {
 
   // ── Create event ──────────────────────────────────────────────────────────
 
-  def createEvent(event: CalendarEvent): Unit = {
-    val calendarMap = listCalendars(service)
+  def createEvent(event: CalendarEvent, showError: String => Unit): Unit = {
+    try {
+      val calendarMap = listCalendars(service)
 
-    val calendarId = calendarMap.getOrElse(
-      event.calendar,
-      throw new IllegalArgumentException(
-        s"Calendar '${event.calendar}' not found. Available: ${calendarMap.keys.mkString(", ")}"
+      val calendarId = calendarMap.getOrElse(
+        event.calendar,
+        throw new IllegalArgumentException(
+          s"Calendar '${event.calendar}' not found. Available: ${calendarMap.keys.mkString(", ")}"
+        )
       )
-    )
 
-    val resolvedEnd = event.endTime.getOrElse(event.startTime.plusHours(1))
+      val resolvedEnd = event.endTime.getOrElse(event.startTime.plusHours(1))
 
-    def toEventDateTime(zdt: ZonedDateTime): EventDateTime =
-      new EventDateTime()
-        .setDateTime(new DateTime(Date.from(zdt.toInstant)))
-        .setTimeZone(zdt.getZone.getId)
+      def toEventDateTime(zdt: ZonedDateTime): EventDateTime =
+        new EventDateTime()
+          .setDateTime(new DateTime(Date.from(zdt.toInstant)))
+          .setTimeZone(zdt.getZone.getId)
 
-    val gEvent = new Event()
-      .setSummary(event.title)
-      .setLocation(event.location)
-      .setDescription(event.description)  // HTML passed as-is
-      .setStart(toEventDateTime(event.startTime))
-      .setEnd(toEventDateTime(resolvedEnd))
+      val gEvent = new Event()
+        .setSummary(event.title)
+        .setLocation(event.location)
+        .setDescription(event.description) // HTML passed as-is
+        .setStart(toEventDateTime(event.startTime))
+        .setEnd(toEventDateTime(resolvedEnd))
 
-    service.events().insert(calendarId, gEvent).execute()
+      service.events().insert(calendarId, gEvent).execute()
 
-    val time = event.startTime.format(DateTimeFormatter.ofPattern("yyyy/MM/dd"))
-    val url = s"https://calendar.google.com/calendar/u/0/r/week/$time"
-    new ProcessBuilder("firefox", url).start()
+      val time = event.startTime.format(DateTimeFormatter.ofPattern("yyyy/MM/dd"))
+      val url = s"https://calendar.google.com/calendar/u/0/r/week/$time"
+      new ProcessBuilder("firefox", url).start()
+    } catch
+    {
+      case e: Exception =>
+        e.printStackTrace()
+        showError(s"Error opening Google Calendar: ${e.getMessage}")
+    }
   }
 
   val calendars: Map[String, String] = Map(

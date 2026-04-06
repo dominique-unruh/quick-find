@@ -67,7 +67,7 @@ object LLM {
        |  "dateTime": "ISO-8601 datetime string with timezone or null",
        |  "location": "location string or null",
        |  "subject": "subject string",
-       |  "summary": "summary text max 100 words",
+       |  "summary": "summary text max 100 words (HTML)",
        |  "participants": ["name1", "name2"]
        |}
        |

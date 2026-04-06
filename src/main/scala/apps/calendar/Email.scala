@@ -131,11 +131,11 @@ object Email {
       logger.debug(s"Found ${icsAttachments.length} ICS attachments. Extracting them.")
       for (attachment <- icsAttachments;
            event <- ICS.parseICS(attachment))
-        events += event.mapDescription(d => s"$messageLink\n\n$d")
+        events += event.mapDescription(d => s"$messageLink\n<br/><br/>\n$d")
     } else {
       logger.debug(s"Found no ICS attachments. Attempting AI.")
       val event = LLM.extractAppointmentFromMessage(subject, body)
-      events += event.mapDescription(d => s"$messageLink\n\n$d")
+      events += event.mapDescription(d => s"$messageLink\n<br/><br/>\n$d")
     }
     events.result()
   }
