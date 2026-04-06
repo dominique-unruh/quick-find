@@ -1,7 +1,7 @@
 package de.unruh.quickfind.apps.calendar
 
 import com.typesafe.scalalogging.Logger
-import de.unruh.quickfind.core.Persistence
+import de.unruh.quickfind.core.Cache
 
 import javax.mail.internet.MimeMessage
 import javax.mail.{BodyPart, Multipart, Part}
@@ -103,7 +103,7 @@ object LLM {
 
   private def cachedQuery(requestBody: String): String = synchronized {
     val key = requestBody.getBytes(UTF_8)
-    Persistence.get(table, getClass, key) match {
+    Cache.get(table, getClass, key) match {
       case Some(value) => String(value, UTF_8)
       case None =>
         println("Doing query.")
@@ -122,7 +122,7 @@ object LLM {
         }
 
         val responseString = response.body()
-        Persistence.put(table, getClass, key, responseString.getBytes(UTF_8))
+        Cache.put(table, getClass, key, responseString.getBytes(UTF_8))
         responseString
       }
   }

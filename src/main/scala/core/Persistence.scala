@@ -7,7 +7,7 @@ import java.nio.ByteBuffer
 import java.nio.file.Path
 import javax.swing.JOptionPane
 
-object Persistence {
+object PersistenceOld {
   val quickfindDir = Path.of("/home/unruh/tmp/quickfind-data")
   val dbDirectory = quickfindDir.resolve("cache")
 

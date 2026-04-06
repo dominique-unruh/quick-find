@@ -1,7 +1,7 @@
 package de.unruh.quickfind
 package apps.calendar
 
-import com.google.api.client.auth.oauth2.Credential
+import com.google.api.client.auth.oauth2.{Credential, TokenResponseException}
 import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp
 import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver
 import com.google.api.client.googleapis.auth.oauth2.{GoogleAuthorizationCodeFlow, GoogleClientSecrets}
@@ -11,7 +11,8 @@ import com.google.api.client.util.DateTime
 import com.google.api.client.util.store.FileDataStoreFactory
 import com.google.api.services.calendar.{Calendar, CalendarScopes}
 import com.google.api.services.calendar.model.{Event, EventDateTime}
-import de.unruh.quickfind.core.Persistence
+import com.typesafe.scalalogging.Logger
+import de.unruh.quickfind.core.Cache
 
 import java.io.{File, InputStreamReader}
 import java.nio.file.{Files, Path}
@@ -25,12 +26,12 @@ object GoogleCalendarClient {
 
   private val APPLICATION_NAME = "quickfind - add calendar entry"
   private val JSON_FACTORY     = GsonFactory.getDefaultInstance
-  private val TOKENS_DIR       = Persistence.quickfindDir.resolve("GoogleCalendarClient-tokens")
+  private val TOKENS_DIR       = Cache.quickfindDir.resolve("GoogleCalendarClient-tokens")
   private val SCOPES           = Collections.singletonList(CalendarScopes.CALENDAR)
 
   // ── Auth ──────────────────────────────────────────────────────────────────
 
-  private def authorize(): Credential = {
+  private def authorize(forceNew: Boolean = false): Credential = {
     val secretsPath  = Path.of(".google-credentials.json")
     val secrets = GoogleClientSecrets.load(JSON_FACTORY, Files.newBufferedReader(secretsPath))
 
@@ -41,15 +42,30 @@ object GoogleCalendarClient {
       .setAccessType("offline")
       .build()
 
+    if (forceNew)
+      flow.getCredentialDataStore.delete("user")
+
     val receiver = new LocalServerReceiver.Builder().setPort(8888).build()
-    new AuthorizationCodeInstalledApp(flow, receiver).authorize("user")
+    val credential = new AuthorizationCodeInstalledApp(flow, receiver).authorize("user")
+    credential
   }
 
-  def buildService(): Calendar = {
+  def buildService(reauthorize: Boolean = false): Calendar = {
     val httpTransport = GoogleNetHttpTransport.newTrustedTransport()
-    new Calendar.Builder(httpTransport, JSON_FACTORY, authorize())
+    val service = new Calendar.Builder(httpTransport, JSON_FACTORY, authorize(reauthorize))
       .setApplicationName(APPLICATION_NAME)
       .build()
+
+    // reauthorize if needed
+    if (!reauthorize) try {
+      service.calendarList().list().setMaxResults(1).execute()
+    } catch {
+      case e: TokenResponseException
+        if Option(e.getDetails).exists(_.getError == "invalid_grant") =>
+      return buildService(reauthorize = true)
+    }
+
+    service
   }
 
   // ── List calendars ────────────────────────────────────────────────────────
@@ -105,4 +121,6 @@ object GoogleCalendarClient {
     "private" -> "private",
     "work" -> "Dominique Unruh",
   )
+
+  private val logger = Logger[GoogleCalendarClient.type]
 }

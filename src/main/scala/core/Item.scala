@@ -49,7 +49,7 @@ trait Item {
   def weightAdjustment: Double = {
     if (_weightAdjustment == Double.MinValue) synchronized {
       if (_weightAdjustment == Double.MinValue) {
-        Persistence.get(tableName, this.getClass, this.persistentKey) match
+        Cache.get(tableName, this.getClass, this.persistentKey) match
           case None => _weightAdjustment = 0
           case Some(encodedWeight) => _weightAdjustment = ByteBuffer.wrap(encodedWeight).getDouble()
       }
@@ -62,7 +62,7 @@ trait Item {
     _weightAdjustment = f(_weightAdjustment)
     println(s"Adjusted weight of $this: $old -> $_weightAdjustment")
     val encodedWeight = ByteBuffer.allocate(8).putDouble(_weightAdjustment).array()
-    Persistence.put(tableName, this.getClass, this.persistentKey, encodedWeight)
+    Cache.put(tableName, this.getClass, this.persistentKey, encodedWeight)
   }
 
   def prefer(factor: Double = 1): Unit =

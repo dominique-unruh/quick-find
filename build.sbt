@@ -20,7 +20,7 @@ lazy val root = (project in file("."))
       "org.apache.commons" % "commons-text" % "1.11.0",
       "org.nibor.autolink" % "autolink" % "0.11.0",
       "nz.ac.waikato.cms.weka" % "weka-stable" % "3.8.6",
-      "org.rocksdb" % "rocksdbjni" % "10.2.1",
+      "org.rocksdb" % "rocksdbjni" % "10.2.1",  // TODO remove
       "javax.mail" % "javax.mail-api" % "1.6.2",
       "com.sun.mail" % "javax.mail" % "1.6.2",
       "com.typesafe.scala-logging" %% "scala-logging" % "3.9.6",
@@ -36,6 +36,7 @@ lazy val root = (project in file("."))
       "com.google.auth"        % "google-auth-library-oauth2-http" % "1.43.0",
       "com.google.api-client"  % "google-api-client" % "2.9.0",
       "com.google.oauth-client" % "google-oauth-client-jetty" % "1.39.0",
+      "org.xerial" % "sqlite-jdbc" % "3.51.3.0",
     )
   )
 
